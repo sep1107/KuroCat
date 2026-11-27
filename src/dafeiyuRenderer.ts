@@ -927,11 +927,29 @@ export class DaFeiYuRenderer {
           -spriteW * 0.5, spriteTop + DISPLAY_TOP * g.drawH,
           spriteW, (DISPLAY_NECK - DISPLAY_TOP) * g.drawH,
         );
-        ctx.drawImage(
-          img, 0, sourceNeck, SPRITE_WIDTH, SPRITE_HEIGHT - sourceNeck,
-          -spriteW * 0.5, spriteTop + DISPLAY_NECK * g.drawH,
-          spriteW, (1 - DISPLAY_NECK) * g.drawH,
-        );
+        ctx.save();
+        ctx.translate(-spriteW * 0.5, spriteTop + DISPLAY_NECK * g.drawH);
+        ctx.scale(spriteW / SPRITE_WIDTH, (1 - DISPLAY_NECK) * g.drawH / (SPRITE_HEIGHT - sourceNeck));
+        ctx.translate(0, -sourceNeck);
+        // Preserve the jacket front and let the moving sleeves supply the arms.
+        ctx.beginPath();
+        ctx.moveTo(76, 139);
+        ctx.lineTo(143, 139);
+        ctx.lineTo(133, 164);
+        ctx.lineTo(135, 184);
+        ctx.lineTo(146, 204);
+        ctx.lineTo(224, 205);
+        ctx.lineTo(224, 278);
+        ctx.lineTo(0, 278);
+        ctx.lineTo(0, 205);
+        ctx.lineTo(72, 204);
+        ctx.lineTo(83, 184);
+        ctx.lineTo(85, 164);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, 0, sourceNeck, SPRITE_WIDTH, SPRITE_HEIGHT - sourceNeck,
+          0, sourceNeck, SPRITE_WIDTH, SPRITE_HEIGHT - sourceNeck);
+        ctx.restore();
       } else if (this.light) {
         // Let the animated sleeves provide the entire arm silhouette for this sprite.
         ctx.save();
@@ -1013,9 +1031,9 @@ export class DaFeiYuRenderer {
     layout: DaFeiYuLayout,
   ): void {
     const g = this.computeGeom(now, layout);
-    const shoulderY = this.butler ? 0.56 : this.light ? 0.662 : 0.653;
-    const shL = g.spritePointToWorld(this.butler ? 0.38 : this.light ? 0.404 : 0.39, shoulderY);
-    const shR = g.spritePointToWorld(this.butler ? 0.60 : 0.61, shoulderY);
+    const shoulderY = this.butler ? 0.552 : this.light ? 0.662 : 0.653;
+    const shL = g.spritePointToWorld(this.butler ? 0.395 : this.light ? 0.404 : 0.39, shoulderY);
+    const shR = g.spritePointToWorld(this.butler ? 0.585 : 0.61, shoulderY);
     const tailRoot = g.spritePointToWorld(this.butler ? 0.59 : 0.56, this.butler ? 0.73 : 0.785);
 
     const isHappy = !layout.privacyMode && layout.petEnergy > 0.25;
@@ -1342,18 +1360,18 @@ export class DaFeiYuRenderer {
       const ny = ux;
       const sgn = side === 'left' ? -1 : 1;
 
-      const wristDist = Math.max(14, len - 9);
+      const wristDist = Math.max(this.butler ? 1 : 14, len - 9);
       const wx = sx + ux * wristDist;
       const wy = sy + uy * wristDist;
       const rSh = 9.2;
-      const rCuff = 12.0;
+      const rCuff = this.butler ? 9.5 : 12;
       const midX = (sx + wx) * 0.5 + nx * (sgn * 2.5);
       const midY = (sy + wy) * 0.5 + ny * (sgn * 2.5);
 
       const grad = ctx.createLinearGradient(sx, sy, wx, wy);
-      grad.addColorStop(0, '#1f223b');
-      grad.addColorStop(0.65, '#272b4b');
-      grad.addColorStop(1, '#31365e');
+      grad.addColorStop(0, this.butler ? '#233858' : '#1f223b');
+      grad.addColorStop(0.65, this.butler ? '#2d4776' : '#272b4b');
+      grad.addColorStop(1, this.butler ? '#3b5484' : '#31365e');
 
       ctx.beginPath();
       ctx.moveTo(sx + nx * rSh, sy + ny * rSh);
@@ -1397,18 +1415,23 @@ export class DaFeiYuRenderer {
       ctx.save();
       ctx.translate(wx, wy);
       ctx.rotate(ang + Math.PI / 2);
-      ctx.fillStyle = '#f8f9fe';
-      ctx.strokeStyle = '#252844';
-      ctx.lineWidth = 1.8;
-      for (let i = -2; i <= 2; i++) {
+      if (this.butler) {
+        ctx.fillStyle = '#f2f5ff';
+        ctx.fillRect(-rCuff + 1.5, -1, (rCuff - 1.5) * 2, 4);
+      } else {
+        ctx.fillStyle = '#f8f9fe';
+        ctx.strokeStyle = '#252844';
+        ctx.lineWidth = 1.8;
+        for (let i = -2; i <= 2; i++) {
+          ctx.beginPath();
+          ctx.arc(i * 4.4, 0, 4.7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
         ctx.beginPath();
-        ctx.arc(i * 4.4, 0, 4.7, 0, Math.PI * 2);
+        ctx.ellipse(0, -0.5, 10.2, 3.6, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.stroke();
       }
-      ctx.beginPath();
-      ctx.ellipse(0, -0.5, 10.2, 3.6, 0, 0, Math.PI * 2);
-      ctx.fill();
       ctx.restore();
 
     }
@@ -1558,19 +1581,24 @@ export class DaFeiYuRenderer {
         ctx.arc(2.0, 0, 1.5, 0, Math.PI * 2);
         ctx.fill();
 
-        // 2) Scalloped white ruffled lace cuff flush along the border edge
-        ctx.fillStyle = '#f8f9fe';
-        ctx.strokeStyle = '#252844';
-        ctx.lineWidth = 1.8;
-        for (let i = -2; i <= 2; i++) {
+        if (this.butler) {
+          ctx.fillStyle = '#f2f5ff';
+          ctx.fillRect(4, -8, 4, 16);
+        } else {
+          // 2) Scalloped white ruffled lace cuff flush along the border edge
+          ctx.fillStyle = '#f8f9fe';
+          ctx.strokeStyle = '#252844';
+          ctx.lineWidth = 1.8;
+          for (let i = -2; i <= 2; i++) {
+            ctx.beginPath();
+            ctx.arc(6.6, i * 4.2, 4.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
           ctx.beginPath();
-          ctx.arc(6.6, i * 4.2, 4.3, 0, Math.PI * 2);
+          ctx.ellipse(6.1, 0, 3.2, 9.4, 0, 0, Math.PI * 2);
           ctx.fill();
-          ctx.stroke();
         }
-        ctx.beginPath();
-        ctx.ellipse(6.1, 0, 3.2, 9.4, 0, 0, Math.PI * 2);
-        ctx.fill();
 
       }
 
