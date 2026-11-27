@@ -1333,67 +1333,67 @@ export class DaFeiYuRenderer {
     const uy = dy / rawLen;
     const px = sx + ux * len;
     const py = sy + uy * len;
-    const nx = -uy;
-    const ny = ux;
     const ang = Math.atan2(dy, dx);
-    const sgn = side === 'left' ? -1 : 1;
-
-    const wristDist = Math.max(this.light ? 1 : 14, len - 9);
-    const wx = sx + ux * wristDist;
-    const wy = sy + uy * wristDist;
-    const rSh = this.light ? 8.5 : 9.2;
-    const rCuff = this.light ? 10 : 12;
-    const midX = (sx + wx) * 0.5 + nx * (sgn * 2.5);
-    const midY = (sy + wy) * 0.5 + ny * (sgn * 2.5);
-
     ctx.save();
-    const grad = ctx.createLinearGradient(sx, sy, wx, wy);
-    grad.addColorStop(0, this.light ? '#b9d4ed' : '#1f223b');
-    grad.addColorStop(0.65, this.light ? '#e4f1fb' : '#272b4b');
-    grad.addColorStop(1, this.light ? '#f8fbff' : '#31365e');
+    if (this.light) {
+      this.drawLightShortSleeve(ctx, sx, sy, ang, len);
+    } else {
+      const nx = -uy;
+      const ny = ux;
+      const sgn = side === 'left' ? -1 : 1;
 
-    ctx.beginPath();
-    ctx.moveTo(sx + nx * rSh, sy + ny * rSh);
-    ctx.quadraticCurveTo(midX + nx * 11.0, midY + ny * 11.0, wx + nx * rCuff, wy + ny * rCuff);
-    ctx.lineTo(wx - nx * rCuff, wy - ny * rCuff);
-    ctx.quadraticCurveTo(midX - nx * 11.0, midY - ny * 11.0, sx - nx * rSh, sy - ny * rSh);
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
+      const wristDist = Math.max(14, len - 9);
+      const wx = sx + ux * wristDist;
+      const wy = sy + uy * wristDist;
+      const rSh = 9.2;
+      const rCuff = 12.0;
+      const midX = (sx + wx) * 0.5 + nx * (sgn * 2.5);
+      const midY = (sy + wy) * 0.5 + ny * (sgn * 2.5);
 
-    ctx.beginPath();
-    ctx.arc(sx, sy, rSh, 0, Math.PI * 2);
-    ctx.fill();
+      const grad = ctx.createLinearGradient(sx, sy, wx, wy);
+      grad.addColorStop(0, '#1f223b');
+      grad.addColorStop(0.65, '#272b4b');
+      grad.addColorStop(1, '#31365e');
 
-    ctx.strokeStyle = this.light ? '#6387ab' : '#181a2e';
-    ctx.lineWidth = 2.4;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(sx + nx * rSh, sy + ny * rSh);
-    ctx.quadraticCurveTo(midX + nx * 11.0, midY + ny * 11.0, wx + nx * rCuff, wy + ny * rCuff);
-    ctx.moveTo(sx - nx * rSh, sy - ny * rSh);
-    ctx.quadraticCurveTo(midX - nx * 11.0, midY - ny * 11.0, wx - nx * rCuff, wy - ny * rCuff);
-    ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(sx + nx * rSh, sy + ny * rSh);
+      ctx.quadraticCurveTo(midX + nx * 11.0, midY + ny * 11.0, wx + nx * rCuff, wy + ny * rCuff);
+      ctx.lineTo(wx - nx * rCuff, wy - ny * rCuff);
+      ctx.quadraticCurveTo(midX - nx * 11.0, midY - ny * 11.0, sx - nx * rSh, sy - ny * rSh);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
 
-    const trimDist = Math.max(8, wristDist - 5.5);
-    ctx.save();
-    ctx.translate(sx + ux * trimDist, sy + uy * trimDist);
-    ctx.rotate(ang + Math.PI / 2);
-    ctx.strokeStyle = this.light ? '#75aee6' : 'rgba(205, 212, 232, 0.85)';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.moveTo(-rCuff + 2, 0);
-    ctx.lineTo(rCuff - 2, 0);
-    ctx.stroke();
-    if (!this.light) {
+      ctx.beginPath();
+      ctx.arc(sx, sy, rSh, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#181a2e';
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(sx + nx * rSh, sy + ny * rSh);
+      ctx.quadraticCurveTo(midX + nx * 11.0, midY + ny * 11.0, wx + nx * rCuff, wy + ny * rCuff);
+      ctx.moveTo(sx - nx * rSh, sy - ny * rSh);
+      ctx.quadraticCurveTo(midX - nx * 11.0, midY - ny * 11.0, wx - nx * rCuff, wy - ny * rCuff);
+      ctx.stroke();
+
+      const trimDist = Math.max(8, wristDist - 5.5);
+      ctx.save();
+      ctx.translate(sx + ux * trimDist, sy + uy * trimDist);
+      ctx.rotate(ang + Math.PI / 2);
+      ctx.strokeStyle = 'rgba(205, 212, 232, 0.85)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-rCuff + 2, 0);
+      ctx.lineTo(rCuff - 2, 0);
+      ctx.stroke();
       ctx.fillStyle = '#e7c67b';
       ctx.beginPath();
       ctx.arc(0, 0, 1.5, 0, Math.PI * 2);
       ctx.fill();
-    }
-    ctx.restore();
+      ctx.restore();
 
-    if (!this.light) {
       ctx.save();
       ctx.translate(wx, wy);
       ctx.rotate(ang + Math.PI / 2);
@@ -1429,6 +1429,55 @@ export class DaFeiYuRenderer {
     ctx.arc(-2.2, -2.2, 2.3, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+    ctx.restore();
+  }
+
+  private drawLightShortSleeve(
+    ctx: CanvasRenderingContext2D,
+    sx: number,
+    sy: number,
+    angle: number,
+    length: number,
+  ): void {
+    const cuff = Math.min(18, length * 0.55);
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(angle);
+    ctx.lineWidth = 1.6;
+    ctx.lineJoin = 'round';
+
+    // The skin continues from the upper-arm cuff to the moving hand.
+    ctx.beginPath();
+    ctx.moveTo(cuff - 2, -6);
+    ctx.quadraticCurveTo((cuff + length) * 0.5, -6, length, -5);
+    ctx.lineTo(length, 5);
+    ctx.quadraticCurveTo((cuff + length) * 0.5, 6, cuff - 2, 6);
+    ctx.closePath();
+    ctx.fillStyle = '#fde7df';
+    ctx.strokeStyle = '#997382';
+    ctx.fill();
+    ctx.stroke();
+
+    const cloth = ctx.createLinearGradient(0, 0, Math.max(1, cuff), 0);
+    cloth.addColorStop(0, '#b9d4ed');
+    cloth.addColorStop(1, '#f8fbff');
+    ctx.beginPath();
+    ctx.moveTo(0, -7.5);
+    ctx.quadraticCurveTo(cuff * 0.55, -8.5, cuff, -9);
+    ctx.lineTo(cuff, 9);
+    ctx.quadraticCurveTo(cuff * 0.55, 8.5, 0, 7.5);
+    ctx.quadraticCurveTo(-7, 0, 0, -7.5);
+    ctx.closePath();
+    ctx.fillStyle = cloth;
+    ctx.strokeStyle = '#6387ab';
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(Math.max(1, cuff - 3), -7.5);
+    ctx.lineTo(Math.max(1, cuff - 3), 7.5);
+    ctx.strokeStyle = '#75aee6';
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -1468,40 +1517,42 @@ export class DaFeiYuRenderer {
       ctx.ellipse(12.8, 2.2, 10.6, 8.2, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 1) Navy sailor sleeve stub emerging from behind the vertical screen border (x = -18 .. +5.2)
-      const sleeveGrad = ctx.createLinearGradient(-18, 0, 5.2, 0);
-      sleeveGrad.addColorStop(0, this.light ? '#b9d4ed' : '#1f223b');
-      sleeveGrad.addColorStop(0.55, this.light ? '#e4f1fb' : '#272b4b');
-      sleeveGrad.addColorStop(1, this.light ? '#f8fbff' : '#31365e');
+      if (this.light) {
+        this.drawLightShortSleeve(ctx, -18, 0, 0, 32);
+      } else {
+        // 1) Navy sailor sleeve stub emerging from behind the vertical screen border (x = -18 .. +5.2)
+        const sleeveGrad = ctx.createLinearGradient(-18, 0, 5.2, 0);
+        sleeveGrad.addColorStop(0, '#1f223b');
+        sleeveGrad.addColorStop(0.55, '#272b4b');
+        sleeveGrad.addColorStop(1, '#31365e');
 
-      ctx.fillStyle = sleeveGrad;
-      ctx.beginPath();
-      ctx.moveTo(-18, -9.4);
-      ctx.quadraticCurveTo(-4, -10.2, 5.2, -11.4);
-      ctx.lineTo(5.2, 11.4);
-      ctx.quadraticCurveTo(-4, 10.2, -18, 9.4);
-      ctx.closePath();
-      ctx.fill();
+        ctx.fillStyle = sleeveGrad;
+        ctx.beginPath();
+        ctx.moveTo(-18, -9.4);
+        ctx.quadraticCurveTo(-4, -10.2, 5.2, -11.4);
+        ctx.lineTo(5.2, 11.4);
+        ctx.quadraticCurveTo(-4, 10.2, -18, 9.4);
+        ctx.closePath();
+        ctx.fill();
 
-      ctx.strokeStyle = this.light ? '#6387ab' : '#181a2e';
-      ctx.lineWidth = 2.2;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(-18, -9.4);
-      ctx.quadraticCurveTo(-4, -10.2, 5.2, -11.4);
-      ctx.moveTo(-18, 9.4);
-      ctx.quadraticCurveTo(-4, 10.2, 5.2, 11.4);
-      ctx.stroke();
+        ctx.strokeStyle = '#181a2e';
+        ctx.lineWidth = 2.2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(-18, -9.4);
+        ctx.quadraticCurveTo(-4, -10.2, 5.2, -11.4);
+        ctx.moveTo(-18, 9.4);
+        ctx.quadraticCurveTo(-4, 10.2, 5.2, 11.4);
+        ctx.stroke();
 
-      // Subtle silver sailor cuff trim + tiny gold button right inside the border edge
-      ctx.strokeStyle = this.light ? '#75aee6' : 'rgba(205, 212, 232, 0.85)';
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.moveTo(2.0, -9.4);
-      ctx.lineTo(2.0, 9.4);
-      ctx.stroke();
-      if (!this.light) {
+        // Subtle silver sailor cuff trim + tiny gold button right inside the border edge
+        ctx.strokeStyle = 'rgba(205, 212, 232, 0.85)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(2.0, -9.4);
+        ctx.lineTo(2.0, 9.4);
+        ctx.stroke();
         ctx.fillStyle = '#e7c67b';
         ctx.beginPath();
         ctx.arc(2.0, 0, 1.5, 0, Math.PI * 2);
