@@ -13,7 +13,7 @@ import { DaFeiYuRenderer, type DaFeiYuLayout } from './dafeiyuRenderer';
 
 export const LOGICAL_W = 420;
 export const LOGICAL_H = 440;
-export type CatBreed = 'black' | 'ragdoll' | 'dafeiyu';
+export type CatBreed = 'black' | 'ragdoll' | 'tuxedo' | 'dafeiyu';
 export type KeyboardOrientation = 'cat' | 'viewer';
 export type TailKeyMode = 'smart' | 'custom' | 'edge' | 'off';
 
@@ -932,9 +932,9 @@ export class KuroCatEngine {
     }
     if (isWhaleBreed(breedId)) {
       if (breedId !== this.catBreed) {
-        this.dafeiyu = new DaFeiYuRenderer(breedId === 'ragdoll');
+        this.dafeiyu = new DaFeiYuRenderer(breedId === 'ragdoll' ? 'butler' : breedId === 'tuxedo' ? 'light' : 'original');
       }
-      this.catBreed = breedId === 'ragdoll' ? 'ragdoll' : 'dafeiyu';
+      this.catBreed = breedId === 'ragdoll' || breedId === 'tuxedo' ? breedId : 'dafeiyu';
       this.customSkin = null;
       catAudio.setPurrIntensity(0);
     } else if (breedId === 'black' && (!skin || skin.builtin)) {

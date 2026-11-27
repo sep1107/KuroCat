@@ -50,7 +50,7 @@
 
 ## 小肥鱼版 · Windows
 
-[下载 Windows x64 安装包](https://github.com/sep1107/KuroCat/releases/latest)。全新安装默认显示小肥鱼，它位于原暖奶茶布偶猫的槽位，保留蓝色动态鱼尾和键鼠响应。原版「大肥鱼」也可在托盘角色菜单中独立选择。
+[下载 Windows x64 安装包](https://github.com/sep1107/KuroCat/releases/latest)。全新安装默认显示小肥鱼，它位于原暖奶茶布偶猫的槽位，保留蓝色动态鱼尾和键鼠响应。原版「大肥鱼」和「小肥鱼 · 浅蓝版」也可在托盘角色菜单中独立选择，浅蓝版位于原奶牛猫槽位。
 
 此定制版的应用内更新使用本仓库的 Releases。发布后续 Windows 版本时，同步提升 `package.json`、`package-lock.json`、`src-tauri/Cargo.toml`、`src-tauri/Cargo.lock` 和 `src-tauri/tauri.conf.json` 的项目版本并推送到 `main`。**Release Windows x64** 工作流会生成并发布 NSIS 安装包。
 
@@ -178,7 +178,7 @@ brew install --cask qianyiai/tap/kurocat
 
 - **✨ 3D 立体手办 / 2D 经典双引擎**：GPU 合批渲染与游戏自动 30 FPS 省电模式，支持 20%–150% 无级缩放、3D 项圈铃铛与游戏自动戴电竞耳机。
 - **🤖 AI 编程伴侣联动**：支持 **Claude Code / Codex / DeepSeek / 豆包工作版 / WorkBuddy / Cursor / Antigravity**，写代码自动代打、跑命令尾巴敲回车、待确认/报错/完工实时互动。
-- **🎨 7 款内置皮肤 + MCP 无限捏猫**：经典小黑猫、小肥鱼、大橘猫、三花猫、奶牛猫、暹罗猫 + **🐳 大肥鱼（鲸鱼娘）**，支持摸头眯眼与 24.5Hz 呼噜声。
+- **🎨 7 款内置皮肤 + MCP 无限捏猫**：经典小黑猫、小肥鱼、大橘猫、三花猫、小肥鱼浅蓝版、暹罗猫 + **🐳 大肥鱼（鲸鱼娘）**，支持摸头眯眼与 24.5Hz 呼噜声。
 - **⌨️ 65% / 108 键双视角 + 独立键鼠**：一键切换全尺寸小键盘与正反视角，支持自定义尾巴拍键，鼠标左/右/中键独立分色按压与错落 3D 按键气泡。
 - **🙈 系统级输密码防偷窥**：自动感知 Win / Mac 密码框，底层钩子直接拦截不外传按键——猫咪闭眼、大肥鱼双手捂眼并遮蔽键帽。
 - **🎥 OBS 透明源 & 多屏无感升级**：原生 Alpha 透明直播源、多显示器工作区固定、macOS 全屏空间悬浮、SHA-256 校验一键自动更新。

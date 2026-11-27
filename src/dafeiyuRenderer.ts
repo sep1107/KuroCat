@@ -6,6 +6,10 @@ import butlerIdleUrl from './assets/dafeiyu/butler_idle.png';
 import butlerBlinkUrl from './assets/dafeiyu/butler_blink.png';
 import butlerShyUrl from './assets/dafeiyu/butler_shy.png';
 import butlerHappyUrl from './assets/dafeiyu/butler_happy2.png';
+import lightIdleUrl from './assets/dafeiyu/light_idle.png';
+import lightBlinkUrl from './assets/dafeiyu/light_blink.png';
+import lightShyUrl from './assets/dafeiyu/light_shy.png';
+import lightHappyUrl from './assets/dafeiyu/light_happy.png';
 
 // Keep the original BigFish's broad silhouette and low neckline over the keyboard.
 const SPRITE_WIDTH = 224;
@@ -149,9 +153,12 @@ export class DaFeiYuRenderer {
   private ripples: WaterRipple[] = [];
   private particles: FloatingParticle[] = [];
 
-  constructor(private readonly butler = false) {
+  constructor(private readonly variant: 'original' | 'butler' | 'light' = 'original') {
     // Sprites are lazy-loaded on first render so default cat skins never decode 4 PNGs into RAM.
   }
+
+  private get butler(): boolean { return this.variant === 'butler'; }
+  private get light(): boolean { return this.variant === 'light'; }
 
   private ensureSprites(): Record<'idle' | 'blink' | 'shy' | 'happy', HTMLImageElement> {
     if (!this.sprites) {
@@ -162,10 +169,10 @@ export class DaFeiYuRenderer {
         return img;
       };
       this.sprites = {
-        idle: mk(this.butler ? butlerIdleUrl : idleUrl),
-        blink: mk(this.butler ? butlerBlinkUrl : blinkUrl),
-        shy: mk(this.butler ? butlerShyUrl : shyUrl),
-        happy: mk(this.butler ? butlerHappyUrl : happyUrl),
+        idle: mk(this.butler ? butlerIdleUrl : this.light ? lightIdleUrl : idleUrl),
+        blink: mk(this.butler ? butlerBlinkUrl : this.light ? lightBlinkUrl : blinkUrl),
+        shy: mk(this.butler ? butlerShyUrl : this.light ? lightShyUrl : shyUrl),
+        happy: mk(this.butler ? butlerHappyUrl : this.light ? lightHappyUrl : happyUrl),
       };
     }
     return this.sprites;
@@ -469,7 +476,7 @@ export class DaFeiYuRenderer {
       const eyeWorld = this.butler ? g.spritePointToWorld(
         (LEFT_EYE.x + RIGHT_EYE.x) / (2 * SPRITE_WIDTH),
         (LEFT_EYE.y + RIGHT_EYE.y) / (2 * SPRITE_HEIGHT),
-      ) : g.spritePointToWorld(0.49, 0.495);
+      ) : g.spritePointToWorld(0.49, this.light ? 0.48 : 0.495);
       const wdx = gazeTarget.x - eyeWorld.x;
       const wdy = gazeTarget.y - eyeWorld.y;
       const c = Math.cos(-this.bodyTilt);
@@ -554,13 +561,14 @@ export class DaFeiYuRenderer {
     const drawH = drawW * (278 / 224);
     const pivotOff = 48;
     const pivotY = charBaseY - pivotOff;
+    const spriteWidthScale = this.butler ? SPRITE_WIDTH_SCALE : this.light ? 1.14 : 1;
     const bodyScaleX = 1 + this.bodyBob * 0.022;
     const bodyScaleY = 1 - this.bodyBob * 0.018;
 
     const spritePointToWorld = (normX: number, normY: number) => {
       const x = (normX - 0.5) * drawW;
       const y = (this.butler ? displaySpriteY(normY) : normY) * drawH - drawH + pivotOff;
-      const lx = this.butler ? x * SPRITE_WIDTH_SCALE * bodyScaleX : x;
+      const lx = this.butler ? x * spriteWidthScale * bodyScaleX : x * spriteWidthScale;
       const ly = this.butler ? y * bodyScaleY : y;
       const c = Math.cos(this.bodyTilt);
       const s = Math.sin(this.bodyTilt);
@@ -577,6 +585,7 @@ export class DaFeiYuRenderer {
       drawH,
       pivotOff,
       pivotY,
+      spriteWidthScale,
       bodyScaleX,
       bodyScaleY,
       spritePointToWorld,
@@ -760,6 +769,7 @@ export class DaFeiYuRenderer {
 
     for (const e of eyes) {
       ctx.save();
+      if (this.light) ctx.translate(e.side === -1 ? 2 : -2, -4);
       this.traceClosedSpline(ctx, e.pts);
       ctx.clip();
 
@@ -838,7 +848,7 @@ export class DaFeiYuRenderer {
       ctx.restore();
     }
 
-    if (!this.butler) {
+    if (this.variant === 'original') {
       const bangs = this.ensureHairBangsCanvas(idleImg);
       if (bangs) ctx.drawImage(bangs, 60, 105);
     }
@@ -900,7 +910,7 @@ export class DaFeiYuRenderer {
       ctx.translate(g.charCenterX, g.pivotY);
       ctx.rotate(this.bodyTilt);
       ctx.scale(g.bodyScaleX, g.bodyScaleY);
-      const spriteW = this.butler ? g.drawW * SPRITE_WIDTH_SCALE : g.drawW;
+      const spriteW = g.drawW * g.spriteWidthScale;
       const spriteTop = -g.drawH + g.pivotOff;
       const sourceNeck = SPRITE_NECK * SPRITE_HEIGHT;
       if (this.butler) {
@@ -1163,10 +1173,10 @@ export class DaFeiYuRenderer {
     }
 
     const stemGrad = ctx.createLinearGradient(rootX, rootY, tipX, tipY);
-    stemGrad.addColorStop(0, 'rgba(24, 34, 68, 0.92)');
-    stemGrad.addColorStop(0.18, '#1d3269');
-    stemGrad.addColorStop(0.55, '#2957a4');
-    stemGrad.addColorStop(1, '#52b2eb');
+    stemGrad.addColorStop(0, this.light ? '#5d94c8' : 'rgba(24, 34, 68, 0.92)');
+    stemGrad.addColorStop(0.18, this.light ? '#83b5e0' : '#1d3269');
+    stemGrad.addColorStop(0.55, this.light ? '#a4cef5' : '#2957a4');
+    stemGrad.addColorStop(1, this.light ? '#d3ecff' : '#52b2eb');
 
     ctx.beginPath();
     ctx.moveTo(
@@ -1228,13 +1238,13 @@ export class DaFeiYuRenderer {
     ctx.scale(scaleMult * (1 + sq * 0.16), scaleMult * (1 - sq * 0.10));
 
     const flukeGrad = ctx.createRadialGradient(-6, 0, 2, 4, 0, 28);
-    flukeGrad.addColorStop(0, '#96ecff');
-    flukeGrad.addColorStop(0.38, '#4ba8e6');
-    flukeGrad.addColorStop(0.78, '#26539e');
-    flukeGrad.addColorStop(1, '#182f68');
+    flukeGrad.addColorStop(0, this.light ? '#f5fcff' : '#96ecff');
+    flukeGrad.addColorStop(0.38, this.light ? '#c2e1fb' : '#4ba8e6');
+    flukeGrad.addColorStop(0.78, this.light ? '#91bfeb' : '#26539e');
+    flukeGrad.addColorStop(1, this.light ? '#6a9ed1' : '#182f68');
 
     ctx.fillStyle = flukeGrad;
-    ctx.strokeStyle = '#151f3b';
+    ctx.strokeStyle = this.light ? '#5a88b5' : '#151f3b';
     ctx.lineWidth = 2.4;
     ctx.beginPath();
     ctx.moveTo(-13, -4);
@@ -1301,9 +1311,9 @@ export class DaFeiYuRenderer {
 
     ctx.save();
     const grad = ctx.createLinearGradient(sx, sy, wx, wy);
-    grad.addColorStop(0, '#1f223b');
-    grad.addColorStop(0.65, '#272b4b');
-    grad.addColorStop(1, '#31365e');
+    grad.addColorStop(0, this.light ? '#b9d4ed' : '#1f223b');
+    grad.addColorStop(0.65, this.light ? '#e4f1fb' : '#272b4b');
+    grad.addColorStop(1, this.light ? '#f8fbff' : '#31365e');
 
     ctx.beginPath();
     ctx.moveTo(sx + nx * rSh, sy + ny * rSh);
@@ -1318,7 +1328,7 @@ export class DaFeiYuRenderer {
     ctx.arc(sx, sy, rSh, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = '#181a2e';
+    ctx.strokeStyle = this.light ? '#6387ab' : '#181a2e';
     ctx.lineWidth = 2.4;
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -1332,7 +1342,7 @@ export class DaFeiYuRenderer {
     ctx.save();
     ctx.translate(sx + ux * trimDist, sy + uy * trimDist);
     ctx.rotate(ang + Math.PI / 2);
-    ctx.strokeStyle = 'rgba(205, 212, 232, 0.85)';
+    ctx.strokeStyle = this.light ? '#75aee6' : 'rgba(205, 212, 232, 0.85)';
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(-rCuff + 2, 0);
@@ -1348,7 +1358,7 @@ export class DaFeiYuRenderer {
     ctx.translate(wx, wy);
     ctx.rotate(ang + Math.PI / 2);
     ctx.fillStyle = '#f8f9fe';
-    ctx.strokeStyle = '#252844';
+    ctx.strokeStyle = this.light ? '#6f98bf' : '#252844';
     ctx.lineWidth = 1.8;
     for (let i = -2; i <= 2; i++) {
       ctx.beginPath();
@@ -1418,9 +1428,9 @@ export class DaFeiYuRenderer {
 
       // 1) Navy sailor sleeve stub emerging from behind the vertical screen border (x = -18 .. +5.2)
       const sleeveGrad = ctx.createLinearGradient(-18, 0, 5.2, 0);
-      sleeveGrad.addColorStop(0, '#1f223b');
-      sleeveGrad.addColorStop(0.55, '#272b4b');
-      sleeveGrad.addColorStop(1, '#31365e');
+      sleeveGrad.addColorStop(0, this.light ? '#b9d4ed' : '#1f223b');
+      sleeveGrad.addColorStop(0.55, this.light ? '#e4f1fb' : '#272b4b');
+      sleeveGrad.addColorStop(1, this.light ? '#f8fbff' : '#31365e');
 
       ctx.fillStyle = sleeveGrad;
       ctx.beginPath();
@@ -1431,7 +1441,7 @@ export class DaFeiYuRenderer {
       ctx.closePath();
       ctx.fill();
 
-      ctx.strokeStyle = '#181a2e';
+      ctx.strokeStyle = this.light ? '#6387ab' : '#181a2e';
       ctx.lineWidth = 2.2;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -1443,7 +1453,7 @@ export class DaFeiYuRenderer {
       ctx.stroke();
 
       // Subtle silver sailor cuff trim + tiny gold button right inside the border edge
-      ctx.strokeStyle = 'rgba(205, 212, 232, 0.85)';
+      ctx.strokeStyle = this.light ? '#75aee6' : 'rgba(205, 212, 232, 0.85)';
       ctx.lineWidth = 1.6;
       ctx.beginPath();
       ctx.moveTo(2.0, -9.4);
@@ -1456,7 +1466,7 @@ export class DaFeiYuRenderer {
 
       // 2) Scalloped white ruffled lace cuff flush along the border edge
       ctx.fillStyle = '#f8f9fe';
-      ctx.strokeStyle = '#252844';
+      ctx.strokeStyle = this.light ? '#6f98bf' : '#252844';
       ctx.lineWidth = 1.8;
       for (let i = -2; i <= 2; i++) {
         ctx.beginPath();

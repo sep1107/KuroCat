@@ -380,6 +380,16 @@ export const DEFAULT_BUILTIN_CATS: CatSkinConfig[] = [
     accentSideColor: '#2563eb',
   },
   {
+    id: 'tuxedo',
+    name: '小肥鱼 · 浅蓝版',
+    emoji: '🐳',
+    builtin: true,
+    furColor: '#2957a4',
+    eyeColorTop: '#2563eb',
+    accentColor: '#5cc8ff',
+    accentSideColor: '#2563eb',
+  },
+  {
     id: 'dafeiyu',
     name: '大肥鱼',
     emoji: '🐳',
@@ -391,7 +401,7 @@ export const DEFAULT_BUILTIN_CATS: CatSkinConfig[] = [
   },
 ];
 
-// Keep the existing ragdoll slot ID for saved preferences and MCP callers.
+// Keep the original slot IDs for saved preferences and MCP callers.
 export function isWhaleBreed(id: string | undefined): boolean {
-  return id === 'dafeiyu' || id === 'ragdoll';
+  return id === 'dafeiyu' || id === 'ragdoll' || id === 'tuxedo';
 }
