@@ -384,7 +384,7 @@ export const KUROCAT_I18N: Record<Locale, KuroCatI18nBundle> = {
     },
     skins: {
       black: '小黑猫',
-      ragdoll: '布偶猫',
+      ragdoll: '小肥鱼 · 小绅士',
       'orange-tabby': '大橘猫',
       calico: '三花猫',
       tuxedo: '奶牛猫',
@@ -714,7 +714,7 @@ export const KUROCAT_I18N: Record<Locale, KuroCatI18nBundle> = {
     },
     skins: {
       black: 'Black Cat',
-      ragdoll: 'Ragdoll',
+      ragdoll: 'Little Whale Butler',
       'orange-tabby': 'Orange Tabby',
       calico: 'Calico',
       tuxedo: 'Tuxedo',
@@ -1044,7 +1044,7 @@ export const KUROCAT_I18N: Record<Locale, KuroCatI18nBundle> = {
     },
     skins: {
       black: '黒猫',
-      ragdoll: 'ラグドール',
+      ragdoll: 'クジラの執事',
       'orange-tabby': '茶トラ',
       calico: '三毛猫',
       tuxedo: 'ハチワレ',
@@ -1374,7 +1374,7 @@ export const KUROCAT_I18N: Record<Locale, KuroCatI18nBundle> = {
     },
     skins: {
       black: '검은 고양이',
-      ragdoll: '랙돌',
+      ragdoll: '꼬마 고래 집사',
       'orange-tabby': '치즈 태비',
       calico: '삼색이',
       tuxedo: '턱시도',
@@ -1704,7 +1704,7 @@ export const KUROCAT_I18N: Record<Locale, KuroCatI18nBundle> = {
     },
     skins: {
       black: 'Gato Negro',
-      ragdoll: 'Ragdoll',
+      ragdoll: 'Little Whale Butler',
       'orange-tabby': 'Atigrado Naranja',
       calico: 'Calicó',
       tuxedo: 'Esmoquin',
@@ -2034,7 +2034,7 @@ export const KUROCAT_I18N: Record<Locale, KuroCatI18nBundle> = {
     },
     skins: {
       black: 'Gato Preto',
-      ragdoll: 'Ragdoll',
+      ragdoll: 'Little Whale Butler',
       'orange-tabby': 'Laranja Tigrado',
       calico: 'Tricolor',
       tuxedo: 'Frajola',
@@ -2364,7 +2364,7 @@ export const KUROCAT_I18N: Record<Locale, KuroCatI18nBundle> = {
     },
     skins: {
       black: 'Чёрный кот',
-      ragdoll: 'Рэгдолл',
+      ragdoll: 'Little Whale Butler',
       'orange-tabby': 'Рыжий полосатый',
       calico: 'Трёхцветная',
       tuxedo: 'Смокинг',
@@ -2694,7 +2694,7 @@ export const KUROCAT_I18N: Record<Locale, KuroCatI18nBundle> = {
     },
     skins: {
       black: 'Schwarze Katze',
-      ragdoll: 'Ragdoll',
+      ragdoll: 'Little Whale Butler',
       'orange-tabby': 'Roter Tiger',
       calico: 'Glückskatze',
       tuxedo: 'Tuxedo',

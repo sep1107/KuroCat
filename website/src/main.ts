@@ -1,3 +1,4 @@
+import { isWhaleBreed } from '../../src/catSkins';
 import {
   DEFAULT_TAIL_KEY_IDS,
   KuroCatEngine,
@@ -492,7 +493,7 @@ function initPlayground(): void {
   const wants3D = () =>
     Boolean(canvas3d) &&
     preferredRenderMode === '3d' &&
-    currentSkinId !== 'dafeiyu' &&
+    !isWhaleBreed(currentSkinId) &&
     !tailPickerOpen &&
     !webgl3dBlocked;
 
@@ -502,7 +503,7 @@ function initPlayground(): void {
     engine3d.setRenderStyle('3d');
     engine3d.setCatSkin(getActiveSkin());
     engine3d.setCollar(currentCollar);
-    engine3d.setHeadphones(headphonesOn && currentSkinId !== 'dafeiyu');
+    engine3d.setHeadphones(headphonesOn && !isWhaleBreed(currentSkinId));
     engine3d.setKeyboardConfig(currentLayout, currentOrient);
     engine3d.setTailKeyConfig(currentTailMode, currentTailKeyIds);
     engine3d.setPrivacyMode(engine.privacyMode);
@@ -515,7 +516,7 @@ function initPlayground(): void {
     });
     webCollarRow?.classList.toggle('hidden', !use3d);
     btnWebOrbit?.classList.toggle('hidden', !use3d);
-    btnWebHeadphones?.classList.toggle('hidden', currentSkinId === 'dafeiyu');
+    btnWebHeadphones?.classList.toggle('hidden', isWhaleBreed(currentSkinId));
     if (!use3d) {
       orbitMode = false;
       orbitDragging = false;
@@ -646,7 +647,7 @@ function initPlayground(): void {
     btn.addEventListener('click', () => {
       const m = btn.dataset.webRendermode === '2d' ? '2d' : '3d';
       preferredRenderMode = m;
-      if (m === '3d' && currentSkinId === 'dafeiyu') {
+      if (m === '3d' && isWhaleBreed(currentSkinId)) {
         const black = BUILTIN_WEB_CATS[0];
         currentSkinId = black.id;
         engine.setCatAppearance(black.id, black);
@@ -666,8 +667,8 @@ function initPlayground(): void {
   btnWebHeadphones?.addEventListener('click', () => {
     headphonesOn = !headphonesOn;
     btnWebHeadphones.classList.toggle('active', headphonesOn);
-    engine.setHeadphones(headphonesOn && currentSkinId !== 'dafeiyu');
-    engine3d?.setHeadphones(headphonesOn && currentSkinId !== 'dafeiyu');
+    engine.setHeadphones(headphonesOn && !isWhaleBreed(currentSkinId));
+    engine3d?.setHeadphones(headphonesOn && !isWhaleBreed(currentSkinId));
   });
 
   // 3D collar switcher
@@ -720,8 +721,8 @@ function initPlayground(): void {
       btn.addEventListener('click', () => {
         currentSkinId = skin.id;
         engine.setCatAppearance(skin.id, skin);
-        engine.setHeadphones(headphonesOn && skin.id !== 'dafeiyu');
-        if (skin.id !== 'dafeiyu') {
+        engine.setHeadphones(headphonesOn && !isWhaleBreed(skin.id));
+        if (!isWhaleBreed(skin.id)) {
           engine3d?.setCatSkin(skin);
           engine3d?.setHeadphones(headphonesOn);
         }
@@ -954,7 +955,7 @@ function initPlayground(): void {
       manualPrivacyPinned = false;
       syncPrivacyState();
     }
-    if (currentSkinId === 'dafeiyu') {
+    if (isWhaleBreed(currentSkinId)) {
       const black = BUILTIN_WEB_CATS.find((c) => c.id === 'black');
       if (black) {
         currentSkinId = black.id;

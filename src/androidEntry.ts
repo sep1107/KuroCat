@@ -1,3 +1,4 @@
+import { isWhaleBreed } from './catSkins';
 import {
   DEFAULT_TAIL_KEY_IDS,
   KuroCatEngine,
@@ -122,7 +123,7 @@ function applySettings(payload: AndroidSettingsPayload): void {
   if (typeof payload.headphones === 'boolean') {
     currentHeadphones = payload.headphones;
   }
-  engine.setHeadphones(currentHeadphones && skin.id !== 'dafeiyu');
+  engine.setHeadphones(currentHeadphones && !isWhaleBreed(skin.id));
 
   if (payload.tailKeyMode !== undefined) {
     const mode: TailKeyMode =
@@ -293,7 +294,7 @@ const bridge = {
     const clientX = rect.left + clampedX * (rect.width || canvas.clientWidth || 1);
     const clientY = rect.top + clampedY * (rect.height || canvas.clientHeight || 1);
     const zone = engine.onCatTapAtClientPoint(clientX, clientY);
-    if (zone === 'head' || zone === null || engine.catBreed === 'dafeiyu') {
+    if (zone === 'head' || zone === null || isWhaleBreed(engine.catBreed)) {
       triggerPetBurst();
     } else {
       cancelPetBurst();

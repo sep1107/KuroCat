@@ -1,7 +1,11 @@
-import idleUrl from './assets/dafeiyu/butler_idle.png';
-import blinkUrl from './assets/dafeiyu/butler_blink.png';
-import shyUrl from './assets/dafeiyu/butler_shy.png';
-import happyUrl from './assets/dafeiyu/butler_happy2.png';
+import idleUrl from './assets/dafeiyu/notail_idle.png';
+import blinkUrl from './assets/dafeiyu/notail_blink.png';
+import shyUrl from './assets/dafeiyu/notail_shy.png';
+import happyUrl from './assets/dafeiyu/notail_happy2.png';
+import butlerIdleUrl from './assets/dafeiyu/butler_idle.png';
+import butlerBlinkUrl from './assets/dafeiyu/butler_blink.png';
+import butlerShyUrl from './assets/dafeiyu/butler_shy.png';
+import butlerHappyUrl from './assets/dafeiyu/butler_happy2.png';
 
 // Keep the original BigFish's broad silhouette and low neckline over the keyboard.
 const SPRITE_WIDTH = 224;
@@ -79,6 +83,9 @@ interface FloatingParticle {
 export class DaFeiYuRenderer {
   private sprites: Record<'idle' | 'blink' | 'shy' | 'happy', HTMLImageElement> | null = null;
 
+  private hairBangsCanvas: HTMLCanvasElement | null = null;
+  private hairBangsAttempted = false;
+
   private lastKeyAt = -10000;
   private lastKeyGazeAt = -10000;
   private lastKeyPtX = 214;
@@ -142,7 +149,7 @@ export class DaFeiYuRenderer {
   private ripples: WaterRipple[] = [];
   private particles: FloatingParticle[] = [];
 
-  constructor() {
+  constructor(private readonly butler = false) {
     // Sprites are lazy-loaded on first render so default cat skins never decode 4 PNGs into RAM.
   }
 
@@ -155,10 +162,10 @@ export class DaFeiYuRenderer {
         return img;
       };
       this.sprites = {
-        idle: mk(idleUrl),
-        blink: mk(blinkUrl),
-        shy: mk(shyUrl),
-        happy: mk(happyUrl),
+        idle: mk(this.butler ? butlerIdleUrl : idleUrl),
+        blink: mk(this.butler ? butlerBlinkUrl : blinkUrl),
+        shy: mk(this.butler ? butlerShyUrl : shyUrl),
+        happy: mk(this.butler ? butlerHappyUrl : happyUrl),
       };
     }
     return this.sprites;
@@ -171,6 +178,12 @@ export class DaFeiYuRenderer {
       }
       this.sprites = null;
     }
+    if (this.hairBangsCanvas) {
+      this.hairBangsCanvas.width = 0;
+      this.hairBangsCanvas.height = 0;
+      this.hairBangsCanvas = null;
+    }
+    this.hairBangsAttempted = false;
   }
 
   public onPrivacyModeChanged(active: boolean): void {
@@ -453,10 +466,10 @@ export class DaFeiYuRenderer {
     let gazeTy = 0;
     if (gazeTarget) {
       const g = this.computeGeom(now, layout);
-      const eyeWorld = g.spritePointToWorld(
+      const eyeWorld = this.butler ? g.spritePointToWorld(
         (LEFT_EYE.x + RIGHT_EYE.x) / (2 * SPRITE_WIDTH),
         (LEFT_EYE.y + RIGHT_EYE.y) / (2 * SPRITE_HEIGHT),
-      );
+      ) : g.spritePointToWorld(0.49, 0.495);
       const wdx = gazeTarget.x - eyeWorld.x;
       const wdy = gazeTarget.y - eyeWorld.y;
       const c = Math.cos(-this.bodyTilt);
@@ -474,7 +487,7 @@ export class DaFeiYuRenderer {
 
     // 2b) Whale tail physics (relative to waist anchor so rapid body shifts NEVER detach the tail!)
     const gTail = this.computeGeom(now, layout);
-    const tailRoot = gTail.spritePointToWorld(0.59, 0.73);
+    const tailRoot = gTail.spritePointToWorld(this.butler ? 0.59 : 0.56, this.butler ? 0.73 : 0.785);
     const wagSpeed = isHappy
       ? 0.015
       : this.typingHeat > 0.45
@@ -545,8 +558,10 @@ export class DaFeiYuRenderer {
     const bodyScaleY = 1 - this.bodyBob * 0.018;
 
     const spritePointToWorld = (normX: number, normY: number) => {
-      const lx = (normX - 0.5) * drawW * SPRITE_WIDTH_SCALE * bodyScaleX;
-      const ly = (displaySpriteY(normY) * drawH - drawH + pivotOff) * bodyScaleY;
+      const x = (normX - 0.5) * drawW;
+      const y = (this.butler ? displaySpriteY(normY) : normY) * drawH - drawH + pivotOff;
+      const lx = this.butler ? x * SPRITE_WIDTH_SCALE * bodyScaleX : x;
+      const ly = this.butler ? y * bodyScaleY : y;
       const c = Math.cos(this.bodyTilt);
       const s = Math.sin(this.bodyTilt);
       return {
@@ -566,6 +581,55 @@ export class DaFeiYuRenderer {
       bodyScaleY,
       spritePointToWorld,
     };
+  }
+
+  private ensureHairBangsCanvas(img: HTMLImageElement): HTMLCanvasElement | null {
+    if (this.hairBangsAttempted) return this.hairBangsCanvas;
+    if (!img.complete || img.naturalWidth <= 0) return null;
+    this.hairBangsAttempted = true;
+    try {
+      const cropX = 60;
+      const cropY = 105;
+      const cropW = 102;
+      const cropH = 42;
+      const srcCanvas = document.createElement('canvas');
+      srcCanvas.width = 224;
+      srcCanvas.height = 278;
+      const sctx = srcCanvas.getContext('2d', { willReadFrequently: true });
+      if (!sctx) return null;
+      sctx.drawImage(img, 0, 0, 224, 278);
+      const idata = sctx.getImageData(cropX, cropY, cropW, cropH);
+      const d = idata.data;
+      for (let ly = 0; ly < cropH; ly++) {
+        const y = cropY + ly;
+        for (let lx = 0; lx < cropW; lx++) {
+          const x = cropX + lx;
+          const idx = (ly * cropW + lx) * 4;
+          const r = d[idx];
+          const g = d[idx + 1];
+          const b = d[idx + 2];
+          const a = d[idx + 3];
+          const inCenterBangs =
+            (x >= 96 && x <= 122 && y <= 137) || (x >= 100 && x <= 118 && y <= 141);
+          const inOuterHair = (x <= 69 || x >= 149) && y <= 145;
+          const isHairPixel =
+            a > 90 && ((r < 175 && b >= r - 6) || (r < 125 && g < 120 && b < 165));
+          if (!((inCenterBangs || inOuterHair) && isHairPixel)) {
+            d[idx + 3] = 0;
+          }
+        }
+      }
+      const out = document.createElement('canvas');
+      out.width = cropW;
+      out.height = cropH;
+      const octx = out.getContext('2d');
+      if (!octx) return null;
+      octx.putImageData(idata, 0, 0);
+      this.hairBangsCanvas = out;
+      return out;
+    } catch {
+      return null;
+    }
   }
 
   private traceClosedSpline(
@@ -598,6 +662,7 @@ export class DaFeiYuRenderer {
     ctx: CanvasRenderingContext2D,
     gazeX: number,
     gazeY: number,
+    idleImg: HTMLImageElement,
   ): void {
     const gazeMag = Math.hypot(gazeX, gazeY);
     const alpha = Math.min(1, gazeMag / 0.55);
@@ -610,7 +675,7 @@ export class DaFeiYuRenderer {
       irx: number;
       iry: number;
       pts: ReadonlyArray<readonly [number, number]>;
-    }> = [
+    }> = this.butler ? [
       {
         side: -1,
         ix: LEFT_EYE.x,
@@ -649,10 +714,49 @@ export class DaFeiYuRenderer {
           [116.5, 110],
         ],
       },
+    ] : [
+      {
+        side: -1,
+        ix: 84.5,
+        iy: 137.4,
+        irx: 9.7,
+        iry: 10.2,
+        pts: [
+          [69.8, 132.8],
+          [76.0, 128.0],
+          [85.0, 127.4],
+          [93.5, 129.4],
+          [97.2, 134.5],
+          [95.5, 143.5],
+          [89.0, 147.2],
+          [80.0, 147.2],
+          [72.5, 143.8],
+          [69.8, 138.0],
+        ],
+      },
+      {
+        side: 1,
+        ix: 133.5,
+        iy: 137.2,
+        irx: 9.8,
+        iry: 10.2,
+        pts: [
+          [120.8, 134.5],
+          [124.5, 129.2],
+          [133.5, 127.2],
+          [142.5, 128.0],
+          [148.2, 132.8],
+          [148.2, 138.0],
+          [145.5, 143.8],
+          [138.0, 147.2],
+          [129.0, 147.2],
+          [122.5, 143.5],
+        ],
+      },
     ];
 
     ctx.save();
-    ctx.globalAlpha *= alpha;
+    ctx.globalAlpha = this.butler ? ctx.globalAlpha * alpha : alpha;
 
     for (const e of eyes) {
       ctx.save();
@@ -660,13 +764,14 @@ export class DaFeiYuRenderer {
       ctx.clip();
 
       // 1) Warm anime sclera + cool-lavender upper-lash cast shadow
-      const scleraGrad = ctx.createLinearGradient(0, 98, 0, 115);
+      const scleraGrad = ctx.createLinearGradient(0, this.butler ? 98 : 127, 0, this.butler ? 115 : 146);
       scleraGrad.addColorStop(0.0, '#c0b4c8');
       scleraGrad.addColorStop(0.28, '#e8dce2');
       scleraGrad.addColorStop(0.58, '#f6ecf0');
       scleraGrad.addColorStop(1.0, '#faf3f5');
       ctx.fillStyle = scleraGrad;
-      ctx.fillRect(e.ix - 14, 97, 28, 20);
+      if (this.butler) ctx.fillRect(e.ix - 14, 97, 28, 20);
+      else ctx.fillRect(e.ix - 18, 125, 36, 25);
 
       // 2) Moving sapphire iris, clipped to the butler sprite’s eye opening
       const icx = e.ix + gazeX;
@@ -733,6 +838,10 @@ export class DaFeiYuRenderer {
       ctx.restore();
     }
 
+    if (!this.butler) {
+      const bangs = this.ensureHairBangsCanvas(idleImg);
+      if (bangs) ctx.drawImage(bangs, 60, 105);
+    }
     ctx.restore();
   }
 
@@ -752,7 +861,7 @@ export class DaFeiYuRenderer {
     // and NEVER floats on top of the keyboard or detaches when shifting left for mouseMode (Fixes #11).
     // Fade and hide smoothly while peeking from the screen edge so only her whale-hooded head shows.
     if (peekP <= 0.35) {
-      const tailRoot = g.spritePointToWorld(0.59, 0.73);
+      const tailRoot = g.spritePointToWorld(this.butler ? 0.59 : 0.56, this.butler ? 0.73 : 0.785);
       const tipX = tailRoot.x + this.tail.relX;
       const tipY = tailRoot.y + this.tail.relY;
       ctx.save();
@@ -791,33 +900,38 @@ export class DaFeiYuRenderer {
       ctx.translate(g.charCenterX, g.pivotY);
       ctx.rotate(this.bodyTilt);
       ctx.scale(g.bodyScaleX, g.bodyScaleY);
-      const spriteW = g.drawW * SPRITE_WIDTH_SCALE;
+      const spriteW = this.butler ? g.drawW * SPRITE_WIDTH_SCALE : g.drawW;
       const spriteTop = -g.drawH + g.pivotOff;
       const sourceNeck = SPRITE_NECK * SPRITE_HEIGHT;
-      ctx.drawImage(
-        img, 0, 0, SPRITE_WIDTH, sourceNeck,
-        -spriteW * 0.5, spriteTop + DISPLAY_TOP * g.drawH,
-        spriteW, (DISPLAY_NECK - DISPLAY_TOP) * g.drawH,
-      );
-      ctx.drawImage(
-        img, 0, sourceNeck, SPRITE_WIDTH, SPRITE_HEIGHT - sourceNeck,
-        -spriteW * 0.5, spriteTop + DISPLAY_NECK * g.drawH,
-        spriteW, (1 - DISPLAY_NECK) * g.drawH,
-      );
+      if (this.butler) {
+        ctx.drawImage(
+          img, 0, 0, SPRITE_WIDTH, sourceNeck,
+          -spriteW * 0.5, spriteTop + DISPLAY_TOP * g.drawH,
+          spriteW, (DISPLAY_NECK - DISPLAY_TOP) * g.drawH,
+        );
+        ctx.drawImage(
+          img, 0, sourceNeck, SPRITE_WIDTH, SPRITE_HEIGHT - sourceNeck,
+          -spriteW * 0.5, spriteTop + DISPLAY_NECK * g.drawH,
+          spriteW, (1 - DISPLAY_NECK) * g.drawH,
+        );
+      } else {
+        ctx.drawImage(img, -spriteW * 0.5, spriteTop, spriteW, g.drawH);
+      }
 
       if (exprKey === 'idle') {
         ctx.save();
-        ctx.translate(-spriteW * 0.5, spriteTop + DISPLAY_TOP * g.drawH);
-        ctx.scale(spriteW / SPRITE_WIDTH, (DISPLAY_NECK - DISPLAY_TOP) * g.drawH / sourceNeck);
-        this.renderLiveEyes(ctx, this.eyeGazeX, this.eyeGazeY);
+        ctx.translate(-spriteW * 0.5, spriteTop + (this.butler ? DISPLAY_TOP * g.drawH : 0));
+        const eyeScaleY = this.butler ? (DISPLAY_NECK - DISPLAY_TOP) / sourceNeck : 1 / SPRITE_HEIGHT;
+        ctx.scale(spriteW / SPRITE_WIDTH, g.drawH * eyeScaleY);
+        this.renderLiveEyes(ctx, this.eyeGazeX, this.eyeGazeY, sprites.idle);
         ctx.restore();
       }
 
       // Soft watercolor blush below the eyes.
       if (this.blushLevel > 0.08) {
         const cheeks = [
-          { x: (0.372 - 0.5) * spriteW, y: spriteTop + displaySpriteY(0.428) * g.drawH },
-          { x: (0.616 - 0.5) * spriteW, y: spriteTop + displaySpriteY(0.428) * g.drawH },
+          { x: (0.372 - 0.5) * spriteW, y: spriteTop + (this.butler ? displaySpriteY(0.428) : 0.562) * g.drawH },
+          { x: (0.616 - 0.5) * spriteW, y: spriteTop + (this.butler ? displaySpriteY(0.428) : 0.562) * g.drawH },
         ];
         for (const ch of cheeks) {
           const rX = 11.5 + this.blushLevel * 4.5;
@@ -857,9 +971,9 @@ export class DaFeiYuRenderer {
     layout: DaFeiYuLayout,
   ): void {
     const g = this.computeGeom(now, layout);
-    const shL = g.spritePointToWorld(0.38, 0.56);
-    const shR = g.spritePointToWorld(0.60, 0.56);
-    const tailRoot = g.spritePointToWorld(0.59, 0.73);
+    const shL = g.spritePointToWorld(this.butler ? 0.38 : 0.39, this.butler ? 0.56 : 0.653);
+    const shR = g.spritePointToWorld(this.butler ? 0.60 : 0.61, this.butler ? 0.56 : 0.653);
+    const tailRoot = g.spritePointToWorld(this.butler ? 0.59 : 0.56, this.butler ? 0.73 : 0.785);
 
     const isHappy = !layout.privacyMode && layout.petEnergy > 0.25;
     const mouseMode =
@@ -911,8 +1025,12 @@ export class DaFeiYuRenderer {
     let rTargetX: number;
     let rTargetY: number;
     if (layout.privacyMode) {
-      const eyeL = g.spritePointToWorld(LEFT_EYE.x / SPRITE_WIDTH, LEFT_EYE.y / SPRITE_HEIGHT);
-      const eyeR = g.spritePointToWorld(RIGHT_EYE.x / SPRITE_WIDTH, RIGHT_EYE.y / SPRITE_HEIGHT);
+      const eyeL = this.butler
+        ? g.spritePointToWorld(LEFT_EYE.x / SPRITE_WIDTH, LEFT_EYE.y / SPRITE_HEIGHT)
+        : g.spritePointToWorld(0.390, 0.476);
+      const eyeR = this.butler
+        ? g.spritePointToWorld(RIGHT_EYE.x / SPRITE_WIDTH, RIGHT_EYE.y / SPRITE_HEIGHT)
+        : g.spritePointToWorld(0.598, 0.476);
       const shyBob = Math.sin(now * 0.008) * 1.4;
       lTargetX = eyeL.x;
       lTargetY = eyeL.y + shyBob;

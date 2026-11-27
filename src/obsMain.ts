@@ -6,7 +6,7 @@ import {
 } from './catEngine';
 import { catAudio } from './audio';
 import { AgentCompanionController, type AgentCompanionEvent } from './agentCompanion';
-import { DEFAULT_BUILTIN_CATS, type CatSkinConfig } from './catSkins';
+import { DEFAULT_BUILTIN_CATS, isWhaleBreed, type CatSkinConfig } from './catSkins';
 import type { KeyboardLayoutId } from './keyboardLayout';
 import type { CollarColorId, KuroCatEngine3D } from './catEngine3d';
 
@@ -258,7 +258,7 @@ function setupLiveModeUI(): void {
 }
 
 function computeObsHeadphonesOn(activeCat: CatSkinConfig | undefined): boolean {
-  if (activeCat?.id === 'dafeiyu') return false;
+  if (isWhaleBreed(activeCat?.id)) return false;
   const hm: ObsHeadphoneMode =
     overrideHeadphones ||
     (currentSettings.headphoneMode === 'auto' || currentSettings.headphoneMode === 'on'
@@ -279,7 +279,7 @@ function syncObs3D(
   tailIds: string[],
   showBubbles: boolean,
 ): void {
-  const want3d = mode === '3d' && activeCat?.id !== 'dafeiyu' && !webglBlocked;
+  const want3d = mode === '3d' && !isWhaleBreed(activeCat?.id) && !webglBlocked;
   if (!want3d) {
     if (active3d) {
       engine3d?.stop();

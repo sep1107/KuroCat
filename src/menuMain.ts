@@ -2,7 +2,7 @@ import './style.css';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { DEFAULT_TAIL_KEY_IDS, type KeyboardOrientation, type TailKeyMode } from './catEngine';
-import { DEFAULT_BUILTIN_CATS, type CatSkinConfig } from './catSkins';
+import { DEFAULT_BUILTIN_CATS, isWhaleBreed, type CatSkinConfig } from './catSkins';
 import type { KeyboardLayoutId } from './keyboardLayout';
 import {
   applyDomTranslations,
@@ -407,7 +407,7 @@ function syncUI(): void {
     btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
   });
 
-  const isDafeiyu = settings.catBreed === 'dafeiyu';
+  const isDafeiyu = isWhaleBreed(settings.catBreed);
   const styleCardEl = document.getElementById('style-card');
   if (styleCardEl) {
     styleCardEl.classList.toggle('hidden', isDafeiyu);

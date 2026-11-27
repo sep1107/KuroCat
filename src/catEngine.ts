@@ -8,7 +8,7 @@ import {
   resolveKeyByVk,
 } from './keyboardLayout';
 import { catAudio } from './audio';
-import { resolveCustomSkin, type CatSkinConfig, type ResolvedSkin } from './catSkins';
+import { isWhaleBreed, resolveCustomSkin, type CatSkinConfig, type ResolvedSkin } from './catSkins';
 import { DaFeiYuRenderer, type DaFeiYuLayout } from './dafeiyuRenderer';
 
 export const LOGICAL_W = 420;
@@ -307,7 +307,7 @@ export class KuroCatEngine {
   public onPrivacyTyping(): void {
     this.privacyTypingAt = performance.now();
     this.wakeAction(this.privacyTypingAt);
-    if (this.catBreed === 'dafeiyu') {
+    if (isWhaleBreed(this.catBreed)) {
       this.dafeiyu.onPrivacyTyping();
     }
   }
@@ -384,7 +384,7 @@ export class KuroCatEngine {
       anim.lastHitAt = now;
     }
     const targetPt = this.getTailTargetPoint(spec);
-    if (this.catBreed === 'dafeiyu') {
+    if (isWhaleBreed(this.catBreed)) {
       this.dafeiyu.triggerTailPreview(targetPt, this.buildDaFeiYuLayout());
       return;
     }
@@ -590,7 +590,7 @@ export class KuroCatEngine {
 
   private computePeekTransform2D(): { tx: number; ty: number; rot: number; pivotX: number; pivotY: number } {
     const p = Math.max(0, Math.min(1, this.peekAmount));
-    const isDafeiyu = this.catBreed === 'dafeiyu';
+    const isDafeiyu = isWhaleBreed(this.catBreed);
     const headY = this.catTopY + 0.24 * this.catHeight;
     const pivotX = isDafeiyu ? (this.keyboardLayout === '108' ? 268 : 192) : this.catCenterX;
     const pivotY = isDafeiyu ? 176 : headY;
@@ -662,7 +662,7 @@ export class KuroCatEngine {
     body: { x: number; y: number; rx: number; ry: number };
     tailPts: Vec2[];
   } {
-    if (this.catBreed === 'dafeiyu') {
+    if (isWhaleBreed(this.catBreed)) {
       const pivotX = this.keyboardLayout === '108' ? 268 : 192;
       return {
         nose: { x: pivotX, y: 204, rx: 18, ry: 15 },
@@ -695,7 +695,7 @@ export class KuroCatEngine {
   }
 
   public hitTestCatZoneLogical(lx: number, ly: number): CatHitZone {
-    if (this.catBreed === 'dafeiyu') {
+    if (isWhaleBreed(this.catBreed)) {
       if (this.peekAmount > 0.35) {
         const pivotX = this.keyboardLayout === '108' ? 268 : 192;
         const pivotY = 176;
@@ -864,7 +864,7 @@ export class KuroCatEngine {
     let leftHeld = 0;
     let rightHeld = 0;
     let rightBusy = false;
-    if (this.catBreed === 'dafeiyu') {
+    if (isWhaleBreed(this.catBreed)) {
       const busy = this.dafeiyu.getHandBusyState(now);
       leftHeld = busy.leftHeld;
       rightHeld = busy.rightHeld;
@@ -895,7 +895,7 @@ export class KuroCatEngine {
   }
 
   private syncLayoutPositions(): void {
-    const isBigFish = this.catBreed === 'dafeiyu';
+    const isBigFish = isWhaleBreed(this.catBreed);
     if (this.keyboardLayout === '108') {
       this.logicalW = 540;
       this.logicalH = 456;
@@ -927,14 +927,17 @@ export class KuroCatEngine {
   }
 
   public setCatAppearance(breedId: string, skin?: CatSkinConfig | null): void {
-    if (breedId !== 'dafeiyu' && this.catBreed === 'dafeiyu') {
+    if (breedId !== this.catBreed && isWhaleBreed(this.catBreed)) {
       this.dafeiyu.releaseSprites();
     }
-    if (breedId === 'dafeiyu') {
-      this.catBreed = 'dafeiyu';
+    if (isWhaleBreed(breedId)) {
+      if (breedId !== this.catBreed) {
+        this.dafeiyu = new DaFeiYuRenderer(breedId === 'ragdoll');
+      }
+      this.catBreed = breedId === 'ragdoll' ? 'ragdoll' : 'dafeiyu';
       this.customSkin = null;
       catAudio.setPurrIntensity(0);
-    } else if ((breedId === 'black' || breedId === 'ragdoll') && (!skin || skin.builtin)) {
+    } else if (breedId === 'black' && (!skin || skin.builtin)) {
       this.catBreed = breedId;
       this.customSkin = null;
     } else if (skin) {
@@ -1395,7 +1398,7 @@ export class KuroCatEngine {
       Math.abs(this.dozeNod) > 0.02 ||
       (this.peekHover > 0.01 && this.peekHover < 0.99) ||
       Math.abs(this.peekHoverSpring.v) > 0.02 ||
-      (this.catBreed === 'dafeiyu' && this.peekAmount > 0.01 && this.peekAmount < 0.99) ||
+      (isWhaleBreed(this.catBreed) && this.peekAmount > 0.01 && this.peekAmount < 0.99) ||
       this.isBlinking ||
       Math.abs(this.eyeXSpring.v) > 0.02 ||
       Math.abs(this.eyeYSpring.v) > 0.02 ||
@@ -1567,7 +1570,7 @@ export class KuroCatEngine {
   }
 
   private pokeAnnoy(amount: number, now: number): void {
-    if (this.catBreed === 'dafeiyu' || this.privacyMode) return;
+    if (isWhaleBreed(this.catBreed) || this.privacyMode) return;
     this.annoy = Math.max(0, Math.min(1, this.annoy + amount));
     this.lastPokeAt = now;
   }
@@ -1598,7 +1601,7 @@ export class KuroCatEngine {
     if (
       mode === 'abrupt' &&
       recentlyWoken &&
-      this.catBreed !== 'dafeiyu' &&
+      !isWhaleBreed(this.catBreed) &&
       !this.privacyMode &&
       this.petEnergy < 0.15 &&
       !this.isCross
@@ -1616,7 +1619,7 @@ export class KuroCatEngine {
   }
 
   private recordPointerSpeed(nx: number, ny: number, now: number): void {
-    if (this.catBreed === 'dafeiyu' || this.privacyMode) return;
+    if (isWhaleBreed(this.catBreed) || this.privacyMode) return;
     const gapMs = now - this.lastPointerSampleAt;
     if (
       this.lastPointerSampleX !== null &&
@@ -1765,7 +1768,7 @@ export class KuroCatEngine {
 
   /** Interactive demo trigger: nose boop -> adorable cross-eyed stare + tiny kitten sneeze! */
   public triggerBoopDemo(): void {
-    if (this.catBreed === 'dafeiyu' || this.privacyMode) return;
+    if (isWhaleBreed(this.catBreed) || this.privacyMode) return;
     const now = performance.now();
     this.wakeCat(now, 'gentle');
     this.wakeAt = -10000;
@@ -1786,7 +1789,7 @@ export class KuroCatEngine {
 
   /** Interactive demo trigger: blissful chin scratch with lifted chin, hearts & warm deeper purr! */
   public triggerChinScratchDemo(durationMs = 2800): void {
-    if (this.catBreed === 'dafeiyu' || this.privacyMode) return;
+    if (isWhaleBreed(this.catBreed) || this.privacyMode) return;
     const now = performance.now();
     this.wakeCat(now, 'gentle');
     this.wakeAt = -10000;
@@ -1801,7 +1804,7 @@ export class KuroCatEngine {
 
   /** Interactive demo trigger: poke tail -> instant recoil tuck + suspicious side-eye (3x within 6s = grumpy!) */
   public triggerTailPokeDemo(): void {
-    if (this.catBreed === 'dafeiyu' || this.privacyMode) return;
+    if (isWhaleBreed(this.catBreed) || this.privacyMode) return;
     const now = performance.now();
     this.wakeCat(now, 'gentle');
     this.wakeAt = -10000;
@@ -1950,7 +1953,7 @@ export class KuroCatEngine {
     const rawKeyPt = this.getKeyWorldCenter(spec);
     const useTail = this.shouldUseTailForKey(spec, rawKeyPt, activelyMousing, prevAnyKeyAt, now);
 
-    if (this.catBreed === 'dafeiyu') {
+    if (isWhaleBreed(this.catBreed)) {
       const dafeiyuLayout = this.buildDaFeiYuLayout();
       const dafeiyuMouseBusy =
         dafeiyuLayout.mouseLeft ||
@@ -2164,8 +2167,8 @@ export class KuroCatEngine {
     if (!this.embedded) {
       this.recordPointerSpeed(nx, ny, now);
     }
-    this.mouseTargetOffsetX = (nx - 0.5) * (this.catBreed === 'dafeiyu' ? 14 : 20);
-    this.mouseTargetOffsetY = (ny - 0.5) * (this.catBreed === 'dafeiyu' ? 11 : 18);
+    this.mouseTargetOffsetX = (nx - 0.5) * (isWhaleBreed(this.catBreed) ? 14 : 20);
+    this.mouseTargetOffsetY = (ny - 0.5) * (isWhaleBreed(this.catBreed) ? 11 : 18);
     this.lastMouseMoveAt = now;
 
     this.leftPaw.mode = 'mouse';
@@ -2175,14 +2178,14 @@ export class KuroCatEngine {
   private getMouseButtonColors(): { left: string; right: string; middle: string } {
     const primary = this.customSkin
       ? this.customSkin.accentColor
-      : this.catBreed === 'dafeiyu'
+      : isWhaleBreed(this.catBreed)
         ? '#5cc8ff'
         : this.catBreed === 'ragdoll'
           ? '#7ac7ff'
           : '#d4f044';
     const scroll = this.customSkin
       ? this.customSkin.accentSideColor
-      : this.catBreed === 'dafeiyu'
+      : isWhaleBreed(this.catBreed)
         ? '#2563eb'
         : this.catBreed === 'ragdoll'
           ? '#4690d8'
@@ -2287,7 +2290,7 @@ export class KuroCatEngine {
   }
 
   private isCursorNearDafeiyuPeekHead(relX: number, relY: number): boolean {
-    if (this.catBreed !== 'dafeiyu' || this.peekAmount <= 0.35) return false;
+    if (!isWhaleBreed(this.catBreed) || this.peekAmount <= 0.35) return false;
     const { tx, ty, rot, pivotX, pivotY } = this.peekTransform;
     if (this.embedded) {
       // Embedded callers pass inverse-peekTransform logical coords via clientToLogical()
@@ -2611,7 +2614,7 @@ export class KuroCatEngine {
       now - this.lastAnyKeyAt < 650 ||
       this.heldKeys.size > 0 ||
       this.catTail.heldVks.size > 0;
-    const isCatMode = this.catBreed !== 'dafeiyu';
+    const isCatMode = !isWhaleBreed(this.catBreed);
 
     // 1) Alive cat emotional states: sleep (loaf + Zzz), curious (laser-pointer eyes), annoy -> cross (airplane ears + tail desk-thump),
     //    rich idle vignettes (doze, yawn, stretch, groom, knead), scruffed drag, boop, chin scratch & tail poke!
@@ -3052,7 +3055,7 @@ export class KuroCatEngine {
     this.squintAmount += (wantSquint - this.squintAmount) * (1 - Math.exp(-12 * dt));
     const wantPrivacy = this.privacyMode ? 1 : 0;
     this.privacyClose += (wantPrivacy - this.privacyClose) * (1 - Math.exp(-14 * dt));
-    if (this.catBreed !== 'dafeiyu' && !this.privacyMode && !scruffWanted) {
+    if (!isWhaleBreed(this.catBreed) && !this.privacyMode && !scruffWanted) {
       if (this.chinAmount > 0.25) {
         catAudio.setPurrIntensity(this.chinAmount, 'chin');
       } else if (this.petEnergy > 0.3 && this.squintAmount > 0.25) {
@@ -3080,7 +3083,7 @@ export class KuroCatEngine {
       : 0;
     this.earPerkSpring.step(earTarget, dt);
 
-    if (this.catBreed === 'dafeiyu') {
+    if (isWhaleBreed(this.catBreed)) {
       this.dafeiyu.update(dt, now, this.buildDaFeiYuLayout());
     } else {
       // Update plush cat tail key-patting physics for keys near the tail
@@ -3501,7 +3504,7 @@ export class KuroCatEngine {
     const breath = Math.sin(this.breathPhase) * (1.0 + this.sleepAmount * 0.65);
     const purrShift = this.squintAmount > 0.4 ? Math.sin(this.elapsed * 22) * 0.45 * this.squintAmount : 0;
 
-    if (this.catBreed === 'dafeiyu') {
+    if (isWhaleBreed(this.catBreed)) {
       const now = performance.now();
       const layout = this.buildDaFeiYuLayout();
       const peekP = Math.max(0, Math.min(1, this.peekAmount));
@@ -5178,14 +5181,14 @@ export class KuroCatEngine {
       if (press > 0.14) {
         topColor = this.customSkin
           ? this.customSkin.accentColor
-          : this.catBreed === 'dafeiyu'
+          : isWhaleBreed(this.catBreed)
             ? '#5cc8ff'
             : this.catBreed === 'ragdoll'
               ? '#7ac7ff'
               : '#d2f244';
         sideColor = this.customSkin
           ? this.customSkin.accentSideColor
-          : this.catBreed === 'dafeiyu'
+          : isWhaleBreed(this.catBreed)
             ? '#2563eb'
             : this.catBreed === 'ragdoll'
               ? '#4690d8'
@@ -5264,9 +5267,9 @@ export class KuroCatEngine {
     };
 
     const pickerAccentTop =
-      this.catBreed === 'dafeiyu' ? '#5cc8ff' : this.catBreed === 'ragdoll' ? '#7ac7ff' : '#c8f538';
+      isWhaleBreed(this.catBreed) ? '#5cc8ff' : this.catBreed === 'ragdoll' ? '#7ac7ff' : '#c8f538';
     const pickerAccentSide =
-      this.catBreed === 'dafeiyu' ? '#2563eb' : this.catBreed === 'ragdoll' ? '#4690d8' : '#8cb014';
+      isWhaleBreed(this.catBreed) ? '#2563eb' : this.catBreed === 'ragdoll' ? '#4690d8' : '#8cb014';
 
     if (!this.tailPickerActive) {
       // Cache the entire static keyboard (chassis + Gaussian shadowBlur + all 65/108 unpressed keycaps & legends)
@@ -5377,7 +5380,7 @@ export class KuroCatEngine {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const dots = performance.now() - this.privacyTypingAt < 350 ? ' • • •' : '';
-      const label = this.catBreed === 'dafeiyu' ? '🔒 非礼勿视 · 已隐藏按键' : '🔒 密码输入中 · 已隐藏按键';
+      const label = isWhaleBreed(this.catBreed) ? '🔒 非礼勿视 · 已隐藏按键' : '🔒 密码输入中 · 已隐藏按键';
       ctx.fillText(label + dots, 0, 0);
       ctx.restore();
     }
