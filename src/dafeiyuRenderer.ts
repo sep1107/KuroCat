@@ -20,6 +20,8 @@ const DISPLAY_NECK = 168 / SPRITE_HEIGHT;
 const DISPLAY_TOP = 5 / SPRITE_HEIGHT;
 const LEFT_EYE = { x: 85.5, y: 106.5 };
 const RIGHT_EYE = { x: 124.5, y: 105.5 };
+const LIGHT_LEFT_EYE = { x: 88.5, y: 138.8 };
+const LIGHT_RIGHT_EYE = { x: 138.5, y: 138.8 };
 
 function displaySpriteY(y: number): number {
   if (y <= SPRITE_NECK) {
@@ -476,7 +478,10 @@ export class DaFeiYuRenderer {
       const eyeWorld = this.butler ? g.spritePointToWorld(
         (LEFT_EYE.x + RIGHT_EYE.x) / (2 * SPRITE_WIDTH),
         (LEFT_EYE.y + RIGHT_EYE.y) / (2 * SPRITE_HEIGHT),
-      ) : g.spritePointToWorld(0.49, this.light ? 0.48 : 0.495);
+      ) : this.light ? g.spritePointToWorld(
+        (LIGHT_LEFT_EYE.x + LIGHT_RIGHT_EYE.x) / (2 * SPRITE_WIDTH),
+        (LIGHT_LEFT_EYE.y + LIGHT_RIGHT_EYE.y) / (2 * SPRITE_HEIGHT),
+      ) : g.spritePointToWorld(0.49, 0.495);
       const wdx = gazeTarget.x - eyeWorld.x;
       const wdy = gazeTarget.y - eyeWorld.y;
       const c = Math.cos(-this.bodyTilt);
@@ -561,15 +566,15 @@ export class DaFeiYuRenderer {
     const drawH = drawW * (278 / 224);
     const pivotOff = 48;
     const pivotY = charBaseY - pivotOff;
-    const spriteWidthScale = this.butler ? SPRITE_WIDTH_SCALE : this.light ? 1.14 : 1;
+    const spriteWidthScale = this.butler ? SPRITE_WIDTH_SCALE : 1;
     const bodyScaleX = 1 + this.bodyBob * 0.022;
     const bodyScaleY = 1 - this.bodyBob * 0.018;
 
     const spritePointToWorld = (normX: number, normY: number) => {
       const x = (normX - 0.5) * drawW;
       const y = (this.butler ? displaySpriteY(normY) : normY) * drawH - drawH + pivotOff;
-      const lx = this.butler ? x * spriteWidthScale * bodyScaleX : x * spriteWidthScale;
-      const ly = this.butler ? y * bodyScaleY : y;
+      const lx = (this.butler || this.light) ? x * spriteWidthScale * bodyScaleX : x;
+      const ly = (this.butler || this.light) ? y * bodyScaleY : y;
       const c = Math.cos(this.bodyTilt);
       const s = Math.sin(this.bodyTilt);
       return {
@@ -765,11 +770,14 @@ export class DaFeiYuRenderer {
     ];
 
     ctx.save();
-    ctx.globalAlpha = this.butler ? ctx.globalAlpha * alpha : alpha;
+    ctx.globalAlpha = (this.butler || this.light) ? ctx.globalAlpha * alpha : alpha;
 
     for (const e of eyes) {
       ctx.save();
-      if (this.light) ctx.translate(e.side === -1 ? 2 : -2, -4);
+      if (this.light) {
+        const anchor = e.side === -1 ? LIGHT_LEFT_EYE : LIGHT_RIGHT_EYE;
+        ctx.translate(anchor.x - e.ix, anchor.y - e.iy);
+      }
       this.traceClosedSpline(ctx, e.pts);
       ctx.clip();
 
@@ -1037,10 +1045,14 @@ export class DaFeiYuRenderer {
     if (layout.privacyMode) {
       const eyeL = this.butler
         ? g.spritePointToWorld(LEFT_EYE.x / SPRITE_WIDTH, LEFT_EYE.y / SPRITE_HEIGHT)
-        : g.spritePointToWorld(0.390, 0.476);
+        : this.light
+          ? g.spritePointToWorld(LIGHT_LEFT_EYE.x / SPRITE_WIDTH, LIGHT_LEFT_EYE.y / SPRITE_HEIGHT)
+          : g.spritePointToWorld(0.390, 0.476);
       const eyeR = this.butler
         ? g.spritePointToWorld(RIGHT_EYE.x / SPRITE_WIDTH, RIGHT_EYE.y / SPRITE_HEIGHT)
-        : g.spritePointToWorld(0.598, 0.476);
+        : this.light
+          ? g.spritePointToWorld(LIGHT_RIGHT_EYE.x / SPRITE_WIDTH, LIGHT_RIGHT_EYE.y / SPRITE_HEIGHT)
+          : g.spritePointToWorld(0.598, 0.476);
       const shyBob = Math.sin(now * 0.008) * 1.4;
       lTargetX = eyeL.x;
       lTargetY = eyeL.y + shyBob;

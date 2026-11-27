@@ -50,7 +50,7 @@
 
 ## 小肥鱼版 · Windows
 
-[下载 Windows x64 安装包](https://github.com/sep1107/KuroCat/releases/latest)。全新安装默认显示小肥鱼，它位于原暖奶茶布偶猫的槽位，保留蓝色动态鱼尾和键鼠响应。原版「大肥鱼」和「小肥鱼 · 浅蓝版」也可在托盘角色菜单中独立选择，浅蓝版位于原奶牛猫槽位。
+[下载 Windows x64 安装包](https://github.com/sep1107/KuroCat/releases/latest)。全新安装默认显示小肥鱼，它位于原暖奶茶布偶猫的槽位，保留蓝色动态鱼尾和键鼠响应。原版「大肥鱼」和「小肥鱼 · 浅蓝版」也可在托盘角色菜单中独立选择，浅蓝版位于原奶牛猫槽位，采用按原版大肥鱼比例对齐的高清贴图，并保留动态浅蓝鱼尾。
 
 此定制版的应用内更新使用本仓库的 Releases。发布后续 Windows 版本时，同步提升 `package.json`、`package-lock.json`、`src-tauri/Cargo.toml`、`src-tauri/Cargo.lock` 和 `src-tauri/tauri.conf.json` 的项目版本并推送到 `main`。**Release Windows x64** 工作流会生成并发布 NSIS 安装包。
 
