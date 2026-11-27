@@ -1,0 +1,70 @@
+name: Release Windows x64
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - src-tauri/tauri.conf.json
+      - .github/workflows/windows-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: windows-x64-release
+
+jobs:
+  release:
+    if: github.repository == 'sep1107/KuroCat' && github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Check release version
+        id: release
+        shell: pwsh
+        run: |
+          $version = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Expected a numeric release version' }
+          $packageVersion = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $cargoVersion = [regex]::Match((Get-Content src-tauri/Cargo.toml -Raw), '(?m)^version = "([^"]+)"').Groups[1].Value
+          if ($version -ne $packageVersion -or $version -ne $cargoVersion) { throw 'Release versions disagree' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          $published = gh api --paginate "repos/$env:GITHUB_REPOSITORY/releases" --jq ".[].tag_name"
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to list releases' }
+          $needed = $published -notcontains "v$version"
+          "needed=$needed".ToLowerInvariant() >> $env:GITHUB_OUTPUT
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.release.outputs.needed == 'true'
+      - name: Build installer
+        if: steps.release.outputs.needed == 'true'
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          npm ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run tauri -- build --target x86_64-pc-windows-msvc --bundles nsis -- --locked
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $installers = @(Get-ChildItem 'src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe')
+          if ($installers.Count -ne 1) { throw 'Expected one NSIS installer' }
+          Copy-Item $installers[0].FullName "KuroCat-$env:VERSION-x64-setup.exe"
+      - uses: actions/upload-artifact@v4
+        if: steps.release.outputs.needed == 'true'
+        with:
+          name: kurocat-windows-x64
+          path: KuroCat-*-x64-setup.exe
+          if-no-files-found: error
+      - name: Publish installer to this fork
+        if: steps.release.outputs.needed == 'true'
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          gh release create "v$env:VERSION" "KuroCat-$env:VERSION-x64-setup.exe" --target "$env:GITHUB_SHA" --title "KuroCat $env:VERSION · 小肥鱼小绅士" --notes 'Windows x64 安装版。默认角色为无白色头饰、带动态鱼尾的小肥鱼小绅士。应用内更新来自本仓库。' --latest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

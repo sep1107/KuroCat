@@ -1,7 +1,7 @@
-import idleUrl from './assets/dafeiyu/notail_idle.png';
-import blinkUrl from './assets/dafeiyu/notail_blink.png';
-import shyUrl from './assets/dafeiyu/notail_shy.png';
-import happyUrl from './assets/dafeiyu/notail_happy2.png';
+import idleUrl from './assets/dafeiyu/butler_idle.png';
+import blinkUrl from './assets/dafeiyu/butler_blink.png';
+import shyUrl from './assets/dafeiyu/butler_shy.png';
+import happyUrl from './assets/dafeiyu/butler_happy2.png';
 
 export interface DaFeiYuLayout {
   logicalW: number;
@@ -462,7 +462,7 @@ export class DaFeiYuRenderer {
 
     // 2b) Whale tail physics (relative to waist anchor so rapid body shifts NEVER detach the tail!)
     const gTail = this.computeGeom(now, layout);
-    const tailRoot = gTail.spritePointToWorld(0.56, 0.785);
+    const tailRoot = gTail.spritePointToWorld(0.59, 0.73);
     const wagSpeed = isHappy
       ? 0.015
       : this.typingHeat > 0.45
@@ -792,7 +792,7 @@ export class DaFeiYuRenderer {
     // and NEVER floats on top of the keyboard or detaches when shifting left for mouseMode (Fixes #11).
     // Fade and hide smoothly while peeking from the screen edge so only her whale-hooded head shows.
     if (peekP <= 0.35) {
-      const tailRoot = g.spritePointToWorld(0.56, 0.785);
+      const tailRoot = g.spritePointToWorld(0.59, 0.73);
       const tipX = tailRoot.x + this.tail.relX;
       const tipY = tailRoot.y + this.tail.relY;
       ctx.save();
@@ -833,20 +833,11 @@ export class DaFeiYuRenderer {
       ctx.scale(1 + this.bodyBob * 0.022, 1 - this.bodyBob * 0.018);
       ctx.drawImage(img, -g.drawW * 0.5, -g.drawH + g.pivotOff, g.drawW, g.drawH);
 
-      // Live2D eye gaze toward mouse/keyboard when eyes are open
-      if (exprKey === 'idle') {
-        ctx.save();
-        ctx.translate(-g.drawW * 0.5, -g.drawH + g.pivotOff);
-        ctx.scale(g.drawW / 224, g.drawH / 278);
-        this.renderLiveEyes(ctx, this.eyeGazeX, this.eyeGazeY, sprites.idle);
-        ctx.restore();
-      }
-
       // Soft natural watercolor cheek blush strictly BELOW her eyes
       if (this.blushLevel > 0.08) {
         const cheeks = [
-          { x: (0.372 - 0.5) * g.drawW, y: 0.562 * g.drawH - g.drawH + g.pivotOff },
-          { x: (0.616 - 0.5) * g.drawW, y: 0.562 * g.drawH - g.drawH + g.pivotOff },
+          { x: (0.372 - 0.5) * g.drawW, y: 0.428 * g.drawH - g.drawH + g.pivotOff },
+          { x: (0.616 - 0.5) * g.drawW, y: 0.428 * g.drawH - g.drawH + g.pivotOff },
         ];
         for (const ch of cheeks) {
           const rX = 11.5 + this.blushLevel * 4.5;
@@ -886,9 +877,9 @@ export class DaFeiYuRenderer {
     layout: DaFeiYuLayout,
   ): void {
     const g = this.computeGeom(now, layout);
-    const shL = g.spritePointToWorld(0.39, 0.653);
-    const shR = g.spritePointToWorld(0.61, 0.653);
-    const tailRoot = g.spritePointToWorld(0.56, 0.785);
+    const shL = g.spritePointToWorld(0.38, 0.56);
+    const shR = g.spritePointToWorld(0.60, 0.56);
+    const tailRoot = g.spritePointToWorld(0.59, 0.73);
 
     const isHappy = !layout.privacyMode && layout.petEnergy > 0.25;
     const mouseMode =
@@ -940,8 +931,8 @@ export class DaFeiYuRenderer {
     let rTargetX: number;
     let rTargetY: number;
     if (layout.privacyMode) {
-      const eyeL = g.spritePointToWorld(0.390, 0.476);
-      const eyeR = g.spritePointToWorld(0.598, 0.476);
+      const eyeL = g.spritePointToWorld(0.396, 0.386);
+      const eyeR = g.spritePointToWorld(0.57, 0.386);
       const shyBob = Math.sin(now * 0.008) * 1.4;
       lTargetX = eyeL.x;
       lTargetY = eyeL.y + shyBob;

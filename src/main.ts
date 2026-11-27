@@ -152,7 +152,7 @@ let settings: AppSettings = {
   soundEnabled: true,
   typingSoundEnabled: false,
   autostart: false,
-  catBreed: 'black',
+  catBreed: 'dafeiyu',
   mcpEnabled: true,
   mcpPort: 27420,
   keyboardLayout: '65',
@@ -1178,7 +1178,7 @@ async function bootstrap(): Promise<void> {
 
   btnToastOpenEl.addEventListener('click', (e) => {
     e.stopPropagation();
-    const url = latestUpdateInfo?.releaseUrl || 'https://github.com/qianyiai/KuroCat/releases/latest';
+    const url = latestUpdateInfo?.releaseUrl || 'https://github.com/sep1107/KuroCat/releases/latest';
     void invoke('open_release_page', { url });
   });
 

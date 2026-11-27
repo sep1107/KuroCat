@@ -48,6 +48,12 @@
 
 <br />
 
+## 小肥鱼小绅士 · Windows 定制版
+
+[下载 Windows x64 安装包](https://github.com/sep1107/KuroCat/releases/latest)。全新安装默认显示小肥鱼小绅士，保留蓝色动态鱼尾和键鼠响应。已有角色设置时，可在托盘角色菜单中选择「小肥鱼 · 小绅士」。
+
+此定制版的应用内更新使用本仓库的 Releases。发布后续 Windows 版本时，同步提升 `package.json`、`package-lock.json`、`src-tauri/Cargo.toml`、`src-tauri/Cargo.lock` 和 `src-tauri/tauri.conf.json` 的项目版本并推送到 `main`。**Release Windows x64** 工作流会生成并发布 NSIS 安装包。
+
 ## 🎬 实机演示
 
 <table>

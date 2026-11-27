@@ -503,7 +503,7 @@ pub fn builtin_cats() -> Vec<CatSkinConfig> {
         },
         CatSkinConfig {
             id: "dafeiyu".to_string(),
-            name: "大肥鱼".to_string(),
+            name: "小肥鱼 · 小绅士".to_string(),
             emoji: Some("🐳".to_string()),
             builtin: true,
             fur_color: "#2957a4".to_string(),

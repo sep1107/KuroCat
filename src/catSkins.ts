@@ -381,7 +381,7 @@ export const DEFAULT_BUILTIN_CATS: CatSkinConfig[] = [
   },
   {
     id: 'dafeiyu',
-    name: '大肥鱼',
+    name: '小肥鱼 · 小绅士',
     emoji: '🐳',
     builtin: true,
     furColor: '#2957a4',

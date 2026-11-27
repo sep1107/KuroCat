@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 fn default_cat_breed() -> String {
-    "black".to_string()
+    "dafeiyu".to_string()
 }
 
 fn default_mcp_enabled() -> bool {

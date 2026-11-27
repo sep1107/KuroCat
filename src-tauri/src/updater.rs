@@ -3,9 +3,8 @@ use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
 use tauri::{AppHandle, Emitter};
 
-const QIANYI_API_LATEST: &str = "https://qianyi.one/kurocat/releases/latest.json";
-const REPO_API_LATEST: &str = "https://api.github.com/repos/qianyiai/KuroCat/releases/latest";
-const REPO_RELEASES_PAGE: &str = "https://github.com/qianyiai/KuroCat/releases/latest";
+const REPO_API_LATEST: &str = "https://api.github.com/repos/sep1107/KuroCat/releases/latest";
+const REPO_RELEASES_PAGE: &str = "https://github.com/sep1107/KuroCat/releases/latest";
 
 pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -622,13 +621,6 @@ fn fetch_json_from_url(url: &str, accept: Option<&str>, timeout_ms: i32) -> Resu
 
 #[cfg(windows)]
 fn fetch_latest_release_json() -> Result<String, String> {
-    // Primary: fast domestic CDN mirror (no proxy needed, zero GitHub API rate limit)
-    if let Ok(text) = fetch_json_from_url(QIANYI_API_LATEST, Some("Accept: application/json\r\n"), 8_000) {
-        if serde_json::from_str::<GhRelease>(&text).is_ok() {
-            return Ok(text);
-        }
-    }
-    // Fallback: official GitHub Releases API
     fetch_json_from_url(
         REPO_API_LATEST,
         Some("Accept: application/vnd.github+json\r\n"),
@@ -679,13 +671,6 @@ fn fetch_json_from_url(url: &str, accept: &str, connect_secs: &str, max_secs: &s
 
 #[cfg(not(windows))]
 fn fetch_latest_release_json() -> Result<String, String> {
-    // Primary: fast domestic CDN mirror (no proxy needed, zero GitHub API rate limit)
-    if let Ok(text) = fetch_json_from_url(QIANYI_API_LATEST, "Accept: application/json", "5", "9") {
-        if serde_json::from_str::<GhRelease>(&text).is_ok() {
-            return Ok(text);
-        }
-    }
-    // Fallback: official GitHub Releases API
     fetch_json_from_url(REPO_API_LATEST, "Accept: application/vnd.github+json", "10", "20")
 }
 
@@ -1196,7 +1181,7 @@ mod tests {
     }
 
     #[test]
-    fn qianyi_mirror_latest_json_parses_assets_and_digest() {
+    fn fork_release_json_parses_assets_and_digest() {
         let sample = r#"{
             "tag_name": "v9.9.9",
             "html_url": "https://qianyi.one/kurocat/",
@@ -1204,13 +1189,13 @@ mod tests {
             "assets": [
                 {
                     "name": "KuroCat-9.9.9-x64-setup.exe",
-                    "browser_download_url": "https://qianyi.one/kurocat/releases/v9.9.9/KuroCat-9.9.9-x64-setup.exe",
+                    "browser_download_url": "https://github.com/sep1107/KuroCat/releases/download/v9.9.9/KuroCat-9.9.9-x64-setup.exe",
                     "size": 2250000,
                     "digest": "sha256:05c1be2c444f5303770f6d59e216bc0ed7b69321fc44368e4ec231405570f950"
                 },
                 {
                     "name": "KuroCat-9.9.9-macos-universal.app.tar.gz",
-                    "browser_download_url": "https://qianyi.one/kurocat/releases/v9.9.9/KuroCat-9.9.9-macos-universal.app.tar.gz",
+                    "browser_download_url": "https://github.com/sep1107/KuroCat/releases/download/v9.9.9/KuroCat-9.9.9-macos-universal.app.tar.gz",
                     "size": 3100000,
                     "digest": "sha256:05c1be2c444f5303770f6d59e216bc0ed7b69321fc44368e4ec231405570f950"
                 }
@@ -1279,11 +1264,11 @@ mod tests {
     #[test]
     fn http_url_parser_handles_github_endpoints() {
         let (https, host, port, path) =
-            parse_http_url("https://api.github.com/repos/qianyiai/KuroCat/releases/latest").unwrap();
+            parse_http_url("https://api.github.com/repos/sep1107/KuroCat/releases/latest").unwrap();
         assert!(https);
         assert_eq!(host, "api.github.com");
         assert_eq!(port, 443);
-        assert_eq!(path, "/repos/qianyiai/KuroCat/releases/latest");
+        assert_eq!(path, "/repos/sep1107/KuroCat/releases/latest");
 
         let (https2, host2, port2, path2) =
             parse_http_url("http://127.0.0.1:8080/dl?v=1").unwrap();
