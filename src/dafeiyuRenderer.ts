@@ -3,6 +3,21 @@ import blinkUrl from './assets/dafeiyu/butler_blink.png';
 import shyUrl from './assets/dafeiyu/butler_shy.png';
 import happyUrl from './assets/dafeiyu/butler_happy2.png';
 
+// Keep the original BigFish's broad silhouette and low neckline over the keyboard.
+const SPRITE_WIDTH = 224;
+const SPRITE_HEIGHT = 278;
+const SPRITE_WIDTH_SCALE = 1.27;
+const SPRITE_NECK = 139 / SPRITE_HEIGHT;
+const DISPLAY_NECK = 168 / SPRITE_HEIGHT;
+const DISPLAY_TOP = 5 / SPRITE_HEIGHT;
+
+function displaySpriteY(y: number): number {
+  if (y <= SPRITE_NECK) {
+    return DISPLAY_TOP + (y / SPRITE_NECK) * (DISPLAY_NECK - DISPLAY_TOP);
+  }
+  return DISPLAY_NECK + ((y - SPRITE_NECK) / (1 - SPRITE_NECK)) * (1 - DISPLAY_NECK);
+}
+
 export interface DaFeiYuLayout {
   logicalW: number;
   kbCenterX: number;
@@ -531,8 +546,8 @@ export class DaFeiYuRenderer {
     const pivotY = charBaseY - pivotOff;
 
     const spritePointToWorld = (normX: number, normY: number) => {
-      const lx = (normX - 0.5) * drawW;
-      const ly = normY * drawH - drawH + pivotOff;
+      const lx = (normX - 0.5) * drawW * SPRITE_WIDTH_SCALE;
+      const ly = displaySpriteY(normY) * drawH - drawH + pivotOff;
       const c = Math.cos(this.bodyTilt);
       const s = Math.sin(this.bodyTilt);
       return {
@@ -831,13 +846,25 @@ export class DaFeiYuRenderer {
       ctx.translate(g.charCenterX, g.pivotY);
       ctx.rotate(this.bodyTilt);
       ctx.scale(1 + this.bodyBob * 0.022, 1 - this.bodyBob * 0.018);
-      ctx.drawImage(img, -g.drawW * 0.5, -g.drawH + g.pivotOff, g.drawW, g.drawH);
+      const spriteW = g.drawW * SPRITE_WIDTH_SCALE;
+      const spriteTop = -g.drawH + g.pivotOff;
+      const sourceNeck = SPRITE_NECK * SPRITE_HEIGHT;
+      ctx.drawImage(
+        img, 0, 0, SPRITE_WIDTH, sourceNeck,
+        -spriteW * 0.5, spriteTop + DISPLAY_TOP * g.drawH,
+        spriteW, (DISPLAY_NECK - DISPLAY_TOP) * g.drawH,
+      );
+      ctx.drawImage(
+        img, 0, sourceNeck, SPRITE_WIDTH, SPRITE_HEIGHT - sourceNeck,
+        -spriteW * 0.5, spriteTop + DISPLAY_NECK * g.drawH,
+        spriteW, (1 - DISPLAY_NECK) * g.drawH,
+      );
 
       // Soft natural watercolor cheek blush strictly BELOW her eyes
       if (this.blushLevel > 0.08) {
         const cheeks = [
-          { x: (0.372 - 0.5) * g.drawW, y: 0.428 * g.drawH - g.drawH + g.pivotOff },
-          { x: (0.616 - 0.5) * g.drawW, y: 0.428 * g.drawH - g.drawH + g.pivotOff },
+          { x: (0.372 - 0.5) * spriteW, y: spriteTop + displaySpriteY(0.428) * g.drawH },
+          { x: (0.616 - 0.5) * spriteW, y: spriteTop + displaySpriteY(0.428) * g.drawH },
         ];
         for (const ch of cheeks) {
           const rX = 11.5 + this.blushLevel * 4.5;
