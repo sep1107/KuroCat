@@ -932,6 +932,30 @@ export class DaFeiYuRenderer {
           -spriteW * 0.5, spriteTop + DISPLAY_NECK * g.drawH,
           spriteW, (1 - DISPLAY_NECK) * g.drawH,
         );
+      } else if (this.light) {
+        // Let the animated sleeves provide the entire arm silhouette for this sprite.
+        ctx.save();
+        ctx.translate(-spriteW * 0.5, spriteTop);
+        ctx.scale(spriteW / SPRITE_WIDTH, g.drawH / SPRITE_HEIGHT);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(224, 0);
+        ctx.lineTo(224, 176);
+        ctx.lineTo(141, 176);
+        ctx.lineTo(140, 188);
+        ctx.lineTo(153, 211);
+        ctx.lineTo(224, 212);
+        ctx.lineTo(224, 278);
+        ctx.lineTo(0, 278);
+        ctx.lineTo(0, 212);
+        ctx.lineTo(76, 211);
+        ctx.lineTo(87, 188);
+        ctx.lineTo(87, 176);
+        ctx.lineTo(0, 176);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, 0, 0, SPRITE_WIDTH, SPRITE_HEIGHT);
+        ctx.restore();
       } else {
         ctx.drawImage(img, -spriteW * 0.5, spriteTop, spriteW, g.drawH);
       }
@@ -989,8 +1013,9 @@ export class DaFeiYuRenderer {
     layout: DaFeiYuLayout,
   ): void {
     const g = this.computeGeom(now, layout);
-    const shL = g.spritePointToWorld(this.butler ? 0.38 : 0.39, this.butler ? 0.56 : 0.653);
-    const shR = g.spritePointToWorld(this.butler ? 0.60 : 0.61, this.butler ? 0.56 : 0.653);
+    const shoulderY = this.butler ? 0.56 : this.light ? 0.662 : 0.653;
+    const shL = g.spritePointToWorld(this.butler ? 0.38 : this.light ? 0.404 : 0.39, shoulderY);
+    const shR = g.spritePointToWorld(this.butler ? 0.60 : 0.61, shoulderY);
     const tailRoot = g.spritePointToWorld(this.butler ? 0.59 : 0.56, this.butler ? 0.73 : 0.785);
 
     const isHappy = !layout.privacyMode && layout.petEnergy > 0.25;
@@ -1313,11 +1338,11 @@ export class DaFeiYuRenderer {
     const ang = Math.atan2(dy, dx);
     const sgn = side === 'left' ? -1 : 1;
 
-    const wristDist = Math.max(14, len - 9);
+    const wristDist = Math.max(this.light ? 1 : 14, len - 9);
     const wx = sx + ux * wristDist;
     const wy = sy + uy * wristDist;
-    const rSh = 9.2;
-    const rCuff = 12.0;
+    const rSh = this.light ? 8.5 : 9.2;
+    const rCuff = this.light ? 10 : 12;
     const midX = (sx + wx) * 0.5 + nx * (sgn * 2.5);
     const midY = (sy + wy) * 0.5 + ny * (sgn * 2.5);
 
@@ -1360,28 +1385,33 @@ export class DaFeiYuRenderer {
     ctx.moveTo(-rCuff + 2, 0);
     ctx.lineTo(rCuff - 2, 0);
     ctx.stroke();
-    ctx.fillStyle = '#e7c67b';
-    ctx.beginPath();
-    ctx.arc(0, 0, 1.5, 0, Math.PI * 2);
-    ctx.fill();
+    if (!this.light) {
+      ctx.fillStyle = '#e7c67b';
+      ctx.beginPath();
+      ctx.arc(0, 0, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
 
-    ctx.save();
-    ctx.translate(wx, wy);
-    ctx.rotate(ang + Math.PI / 2);
-    ctx.fillStyle = '#f8f9fe';
-    ctx.strokeStyle = this.light ? '#6f98bf' : '#252844';
-    ctx.lineWidth = 1.8;
-    for (let i = -2; i <= 2; i++) {
+    if (!this.light) {
+      ctx.save();
+      ctx.translate(wx, wy);
+      ctx.rotate(ang + Math.PI / 2);
+      ctx.fillStyle = '#f8f9fe';
+      ctx.strokeStyle = '#252844';
+      ctx.lineWidth = 1.8;
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.arc(i * 4.4, 0, 4.7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
       ctx.beginPath();
-      ctx.arc(i * 4.4, 0, 4.7, 0, Math.PI * 2);
+      ctx.ellipse(0, -0.5, 10.2, 3.6, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.stroke();
+      ctx.restore();
+
     }
-    ctx.beginPath();
-    ctx.ellipse(0, -0.5, 10.2, 3.6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
 
     // Pure round chibi hand (zero thumb!)
     ctx.save();
@@ -1471,24 +1501,27 @@ export class DaFeiYuRenderer {
       ctx.moveTo(2.0, -9.4);
       ctx.lineTo(2.0, 9.4);
       ctx.stroke();
-      ctx.fillStyle = '#e7c67b';
-      ctx.beginPath();
-      ctx.arc(2.0, 0, 1.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 2) Scalloped white ruffled lace cuff flush along the border edge
-      ctx.fillStyle = '#f8f9fe';
-      ctx.strokeStyle = this.light ? '#6f98bf' : '#252844';
-      ctx.lineWidth = 1.8;
-      for (let i = -2; i <= 2; i++) {
+      if (!this.light) {
+        ctx.fillStyle = '#e7c67b';
         ctx.beginPath();
-        ctx.arc(6.6, i * 4.2, 4.3, 0, Math.PI * 2);
+        ctx.arc(2.0, 0, 1.5, 0, Math.PI * 2);
         ctx.fill();
-        ctx.stroke();
+
+        // 2) Scalloped white ruffled lace cuff flush along the border edge
+        ctx.fillStyle = '#f8f9fe';
+        ctx.strokeStyle = '#252844';
+        ctx.lineWidth = 1.8;
+        for (let i = -2; i <= 2; i++) {
+          ctx.beginPath();
+          ctx.arc(6.6, i * 4.2, 4.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.ellipse(6.1, 0, 3.2, 9.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
       }
-      ctx.beginPath();
-      ctx.ellipse(6.1, 0, 3.2, 9.4, 0, 0, Math.PI * 2);
-      ctx.fill();
 
       // 3) Plump round peach chibi hand gripping inward onto the screen (x ≈ +6 .. +22)
       ctx.fillStyle = '#fde7df';
